@@ -112,7 +112,5 @@ log/
 fig/
 test/
 iwslt2016/
-eval/
-fig/
-log/
-test/
+dataset/
+
