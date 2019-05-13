@@ -1,8 +1,15 @@
 import tensorflow as tf
 from cnn import CNN
 from transformer import Transfomer
+from utils.data_load import load_vocab
+from utils.modules import label_smoothing, noam_scheme
+from utils.utils import convert_idx_to_token_tensor
 
-from
+import logging
+from tqdm import tqdm
+
+logging.basicConfig(level=logging.INFO)
+
 
 class EncoderDecoder:
 
@@ -11,14 +18,12 @@ class EncoderDecoder:
         self.encoder = CNN(hp)
         self.decoder = Transfomer(hp)
 
-        # Load vocab
-        # Load token2idx etc.
-
+        # TODO:
+        self.token2idx, self.idx2token = load_vocab(hp.vocab)
 
     def train(self, xs, ys):
         memory, info = self.encoder.encode(xs)
         logits, yhat, y, length = self.decoder.decode(ys, memory, training=True)
-
 
         # train scheme
         y_ = label_smoothing(tf.one_hot(y, depth=self.hp.vocab_size))
@@ -50,7 +55,7 @@ class EncoderDecoder:
         decoder_inputs = tf.ones((tf.shape(xs[0])[0], 1), tf.int32) * self.token2idx["<s>"]
         ys = (decoder_inputs, y, y_seqlen, sents2)
 
-        memory, sents1 = self.encoder.encode(xs, False)
+        memory, sents1 = self.encoder.encode(xs)
 
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):

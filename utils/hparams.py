@@ -1,5 +1,6 @@
 import argparse
 
+
 class Hparams:
     parser = argparse.ArgumentParser()
 
@@ -9,15 +10,15 @@ class Hparams:
     # train
     ## files
     parser.add_argument('--train1', default='iwslt2016/segmented/train.de.bpe',
-                             help="german training segmented data")
+                        help="german training segmented data")
     parser.add_argument('--train2', default='iwslt2016/segmented/train.en.bpe',
-                             help="english training segmented data")
+                        help="english training segmented data")
     parser.add_argument('--eval1', default='iwslt2016/segmented/eval.de.bpe',
-                             help="german evaluation segmented data")
+                        help="german evaluation segmented data")
     parser.add_argument('--eval2', default='iwslt2016/segmented/eval.en.bpe',
-                             help="english evaluation segmented data")
+                        help="english evaluation segmented data")
     parser.add_argument('--eval3', default='iwslt2016/prepro/eval.en',
-                             help="english evaluation unsegmented data")
+                        help="english evaluation unsegmented data")
 
     ## vocabulary
     parser.add_argument('--vocab', default='iwslt2016/segmented/bpe.vocab',

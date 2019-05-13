@@ -12,9 +12,9 @@ import os
 
 import tensorflow as tf
 
-from utils.utils import get_batch
-from model import Transformer
-from utils.utils import Hparams
+from utils.data_load import get_batch
+from original_transformer.model import Transformer
+from utils.hparams import Hparams
 from utils.utils import get_hypotheses, calc_bleu, load_hparams
 import logging
 
