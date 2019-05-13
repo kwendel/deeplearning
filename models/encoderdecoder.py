@@ -20,6 +20,9 @@ class EncoderDecoder:
 
         # TODO:
         self.token2idx, self.idx2token = load_vocab(hp.vocab)
+        # Load vocab
+        # Load token2idx etc.
+
 
     def train(self, xs, ys):
         memory, info = self.encoder.encode(xs)
@@ -55,7 +58,7 @@ class EncoderDecoder:
         decoder_inputs = tf.ones((tf.shape(xs[0])[0], 1), tf.int32) * self.token2idx["<s>"]
         ys = (decoder_inputs, y, y_seqlen, sents2)
 
-        memory, sents1 = self.encoder.encode(xs)
+        memory, sents1 = self.encoder.encode(xs, False)
 
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):
