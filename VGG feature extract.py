@@ -5,17 +5,21 @@ from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.applications.vgg16 import preprocess_input
 from tensorflow.keras.applications.vgg16 import decode_predictions
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Reshape
+from tensorflow.keras.layers import Reshape, Dense
 import numpy as np
 # load the model
 model = VGG16()
+model.summary()
 
 # make new model by deleting last layer
 new_input = model.input
+semantic_output = model.layers[-1].output
 hidden_layer = model.layers[-6].output
-new_output = Reshape((196, 512), input_shape = (14, 14, 512))(hidden_layer)
+hidden_layer = Reshape((196, 512), input_shape = (14, 14, 512))(hidden_layer)
+spatial_output = Dense(1000, activation = 'relu', input_shape = (196,512)) (hidden_layer)
+#new_output = Reshape((196, 512), input_shape = (14, 14, 512))(hidden_layer)
 
-image_features_extract_model = Model(inputs = new_input, outputs = new_output)
+image_features_extract_model = Model(inputs = new_input, outputs = [spatial_output, semantic_output])
 image_features_extract_model.summary()
 
 
