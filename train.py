@@ -12,9 +12,9 @@ import os
 from tqdm import tqdm
 
 from model import Transformer
-from data_load import get_batch
-from utils import save_hparams, save_variable_specs, get_hypotheses, calc_bleu
-from hparams import Hparams
+from utils.utils import get_batch
+from utils.utils import save_hparams, save_variable_specs, get_hypotheses, calc_bleu
+from utils.utils import Hparams
 
 logging.basicConfig(level=logging.INFO)
 
