@@ -36,7 +36,7 @@ def files_to_prediction(dir_path):
         # Reshape to one row
         img = img.reshape((1,) + img.shape[:3])
 
-        images[fname] = predictor.predict(img).flatten()
+        images[fname] = dp.predict(img).flatten()
 
     # Save the results
     pickle.dump(images, file=open(f"{root}{dir_path}/preprocessed.p", "wb"))
@@ -89,6 +89,41 @@ def analyse_pca(images: dict):
             plt.imshow(image)
             plt.title("{} ({})".format(ivec, color))
     plt.show()
+
+
+def load_flickr_train(images, text):
+    return load_flickr_set(images, text, 'Flickr_8k.trainImages.txt', test=False)
+
+
+def load_flickr_test(images, text):
+    return load_flickr_set(images, text, 'Flickr_8k.testImages.txt', test=True)
+
+
+def load_flickr_set(images, text, file, test):
+    dataset = OrderedDict()
+    p = f"{root}{text_dir}{file}"
+    with open(p, 'r', encoding='UTF-8') as f:
+        # Read the data
+        name = f.readline()
+        img_data = images[name]
+        text_data = text[name]
+
+        # If there is only one caption, just add it
+        if len(text_data) == 1:
+            dataset[name] = (img_data[name], text_data)
+        else:
+            # For testing data, we want all available captions as true labels
+            if test:
+                # dataset[name] = (img_data[name]) + (caption, for _, caption in enumerate(text_data))
+                for idx, caption in enumerate(text_data):
+                    dataset[name] = dataset[name] + (caption,)
+            # For training data, we want to use the captions to generate new training objects
+            else:
+                for idx, caption in enumerate(text_data):
+                    new_name = name + '-' + str(idx)
+                    dataset[new_name] = (img_data[name], text_data[idx])
+
+    return dataset
 
 
 if __name__ == '__main__':
