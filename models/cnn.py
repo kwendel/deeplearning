@@ -1,6 +1,9 @@
-from tensorflow.python.keras.applications.vgg16 import VGG16, preprocess_input
+# from tensorflow.python.keras.applications.vgg16 import VGG16, preprocess_input
 from tensorflow.python.keras.layers import Reshape, Dense
 from tensorflow.python.keras import Model
+
+from tensorflow.python.keras.applications.vgg16 import VGG16
+# from keras.applications.vgg16 import VGG16
 
 from utils.hparams import Hparams
 
@@ -33,3 +36,25 @@ class CNN:
         y_hat = self.vgg.predict(x)
 
         return y_hat, sents1
+
+
+class DataPredictor:
+    def __init__(self):
+        # Construct the pretrained VGG16
+        model = VGG16()
+        print("## VGG unchanged")
+        model.summary()
+
+        # Change the model to output his intermediate predictions
+        new_input = model.input
+        semantic_output = model.layers[-1].output
+        hidden_layer = model.layers[-6].output
+
+        print("## VGG with intermediate predictions")
+        self.vgg = Model(inputs=new_input, outputs=[hidden_layer, semantic_output])
+        self.vgg.summary()
+
+    def predict(self, x):
+        return self.vgg.predict(x)
+
+
