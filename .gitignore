@@ -119,3 +119,5 @@ iwslt2016/
 
 # Ignore datsets
 /dataset/*
+
+/models/pretrained/*
