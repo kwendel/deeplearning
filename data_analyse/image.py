@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.decomposition import PCA
 from tensorflow.python.keras.applications.vgg16 import preprocess_input
 from tensorflow.python.keras.preprocessing.image import load_img, img_to_array
@@ -104,24 +105,20 @@ def load_flickr_set(images, text, file, test):
     p = f"{root}{text_dir}{file}"
     with open(p, 'r', encoding='UTF-8') as f:
         # Read the data
-        name = f.readline()
+        name = f.readline().strip("\n")
         img_data = images[name]
-        text_data = text[name]
+        text_data = text[text['image_idx'] == name]
 
-        # If there is only one caption, just add it
-        if len(text_data) == 1:
-            dataset[name] = (img_data[name], text_data)
+        # For testing data, we want all available captions as true labels
+        if test:
+            dataset[name] = (img_data,)
+            for idx, row in text_data.iterrows():
+                dataset[name] = dataset[name] + (row['caption'],)
+        # For training data, we want to use the captions to generate new training objects
         else:
-            # For testing data, we want all available captions as true labels
-            if test:
-                # dataset[name] = (img_data[name]) + (caption, for _, caption in enumerate(text_data))
-                for idx, caption in enumerate(text_data):
-                    dataset[name] = dataset[name] + (caption,)
-            # For training data, we want to use the captions to generate new training objects
-            else:
-                for idx, caption in enumerate(text_data):
-                    new_name = name + '-' + str(idx)
-                    dataset[new_name] = (img_data[name], text_data[idx])
+            for idx, row in text_data.iterrows():
+                new_name = name + '-' + row['caption_idx']
+                dataset[new_name] = (img_data, row['caption'])
 
     return dataset
 
@@ -130,6 +127,10 @@ if __name__ == '__main__':
     # Use VGG to make prediction for a whole directory
     # files_to_prediction(images_dir)
 
+    text = pd.read_pickle('encoded_captions.p')
     preds = pickle.load(open(f"{root}{images_dir}/preprocessed.p", "rb"))
+    trn = load_flickr_train(preds, text)
+    tst = load_flickr_test(preds, text)
+
     # Analyze the VGG embedding with the help of PCA
     # analyse_pca(preds)
