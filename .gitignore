@@ -106,6 +106,9 @@ venv.bak/
 # ignore Intelij config
 .idea
 deeplearning.iml
+/data_analyse/text_dataframe.txt
+/data_analyse/trained_sp.model
+/data_analyse/trained_sp.vocab
 
 # ignore data
 eval/
