@@ -6,6 +6,7 @@ import pandas as pd
 import string
 import sentencepiece as spm
 
+from keras.preprocessing.sequence import pad_sequences
 from keras.backend.tensorflow_backend import set_session
 from collections import Counter
 
@@ -204,7 +205,7 @@ if __name__ == '__main__':
 
     # Train SentencePiece Model
     model_prefix = "trained_sp"
-    spm.SentencePieceTrainer.Train(f'--input=text_dataframe.txt --model_prefix={model_prefix} --vocab_size=2048')
+    spm.SentencePieceTrainer.Train(f'--input=text_dataframe.txt --model_prefix={model_prefix} --vocab_size=2048 --pad_id=3 --extra_options=bos:eos')
 
     # Load trained model
     sp = spm.SentencePieceProcessor()
@@ -212,10 +213,16 @@ if __name__ == '__main__':
 
     # Encode all captions with sentencepiece
     print_progress_bar(0, l, prefix='Progress:', suffix='Complete', length=50)
+    maxlen = 0
     for i, caption in enumerate(df_txt.caption.values):
         newcaption = sp.encode_as_ids(caption)
         df_txt["caption"].iloc[i] = newcaption
+        if maxlen < len(newcaption):
+            maxlen = len(newcaption)
         print_progress_bar(i + 1, l, prefix='Progress enconding captions:', suffix='Complete', length=50, decimals=1)
 
+    for i, caption in enumerate(df_txt.caption.values):
+        df_txt["caption"].iloc[i] = pad_sequences([caption], maxlen=maxlen, value=3)
+        
     # Write to pickle file
     df_txt.to_pickle(path="encoded_captionsencoded_captions.p")
