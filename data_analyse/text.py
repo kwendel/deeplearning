@@ -1,20 +1,24 @@
 # Inspired of https://fairyonice.github.io/Develop_an_image_captioning_deep_learning_model_using_Flickr_8K_data.html
-import matplotlib.pyplot as plt
-import tensorflow as tf
-import numpy as np
-import pandas as pd
 import string
-import sentencepiece as spm
-
-from keras.preprocessing.sequence import pad_sequences
-from keras.backend.tensorflow_backend import set_session
 from collections import Counter
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import sentencepiece as spm
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+from keras.preprocessing.sequence import pad_sequences
+from keras.utils import to_categorical
+from tqdm import tqdm
+
 # Path to captions file
-captions_path = "C:/Users/User/Downloads/Flickr8k_text/Flickr8k.lemma.token.txt"
+# captions_path = "C:/Users/User/Downloads/Flickr8k_text/Flickr8k.lemma.token.txt"
+
+captions_path = "C:/Users/kaspe/Documents/Study/Q3 Deep Learning/deeplearning/dataset/Flickr8k/Flickr8k_text/Flickr8k.lemma.token.txt"
 
 # For analysis
-analysis = True
+analysis = False
 topn = 50
 
 
@@ -114,10 +118,6 @@ def remove_numeric(text, printTF=False):
     return text_no_numeric
 
 
-def add_start_end_seq_token(text):
-    return 'startseq ' + text + ' endseq'
-
-
 def text_clean(text_original):
     text = remove_punctuation(text_original)
     text = remove_single_character(text)
@@ -149,80 +149,167 @@ def print_progress_bar(iteration, total, prefix='', suffix='', decimals=1, lengt
         print()
 
 
-if __name__ == '__main__':
-    # Configure details
-    # warnings.filterwarnings("ignore")
-    config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.95
-    config.gpu_options.visible_device_list = "0"
-
-    # Start tf session
-    set_session(tf.Session(config=config))
-
-    # Read file
-    print("Start reading file\n")
+def read_captions(captions_path):
     text = read_file(captions_path)
     text = split_lines(text)
 
     # Create Dataframe with pandas
     df_txt = pd.DataFrame(text, columns=["image_idx", "caption_idx", "caption"])
-    df_word = make_df_word(df_txt)
+    # df_word = make_df_word(df_txt)
 
-    if analysis:
-        print("Start file analysis\n")
+    return df_txt
 
-        # Find unique image_idx
-        uni_image_idx = np.unique(df_txt.image_idx.values)
-        print("The number of unique file names : {}".format(len(uni_image_idx)))
-        print("The distribution of the number of captions for each image:")
-        print(Counter(Counter(df_txt.image_idx.values).values()))
-        print()
 
-        # Word analysis
-        print("Most occuring words\n")
-        print(df_word.head(5))
-
-        plot_hist(df_word.iloc[:topn, :], title="The top " + str(topn) + " most frequently appearing words")
-        plot_hist(df_word.iloc[-topn:, :], title="The least " + str(topn) + " most frequently appearing words")
-
-    # Clean text
-    print("Start cleaning captions")
-    l = len(df_txt.caption)
-    print_progress_bar(0, l, prefix='Progress:', suffix='Complete', length=50)
-    for i, caption in enumerate(df_txt.caption.values):
+def clean_captions(df_txt):
+    for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Cleaning captions')):
         newcaption = text_clean(caption)
         df_txt["caption"].iloc[i] = newcaption
-        print_progress_bar(i + 1, l, prefix='Progress cleaning captions:', suffix='Complete', length=50, decimals=1)
 
-    # Analyze cleaned data
-    if analysis:
-        dfword = make_df_word(df_txt)
-        plot_hist(dfword.iloc[:topn, :], title="The top " + str(topn) + " most frequently appearing words")
-        plot_hist(dfword.iloc[-topn:, :], title="The least " + str(topn) + " most frequently appearing words")
+    return df_txt
 
-    # Save to txt for encoding
-    np.savetxt(r'text_dataframe.txt', df_txt["caption"], fmt='%s')
 
-    # Train SentencePiece Model
-    model_prefix = "trained_sp"
-    spm.SentencePieceTrainer.Train(f'--input=text_dataframe.txt --model_prefix={model_prefix} --vocab_size=2048 --pad_id=3 --extra_options=bos:eos')
+def train_sp(in_path, out_path, vocab_size):
+    # model_prefix = "trained_sp"
+    spm.SentencePieceTrainer.Train(f'--input={in_path} '
+                                   f'--model_prefix={out_path} '
+                                   f'--vocab_size={vocab_size} '
+                                   f'--bos_id=0 '
+                                   f'--unk_id=1 '
+                                   f'--pad_id=2 '
+                                   f'--eos_id=3 ')
+    return
 
+
+def load_sp(in_path):
     # Load trained model
     sp = spm.SentencePieceProcessor()
-    sp.Load(f'{model_prefix}.model')
+    sp.Load(f'{in_path}.model')
 
-    # Encode all captions with sentencepiece
-    print_progress_bar(0, l, prefix='Progress:', suffix='Complete', length=50)
+    return sp
+
+
+def onehot_encode(df_txt, sp, vocab_size):
     maxlen = 0
-    for i, caption in enumerate(df_txt.caption.values):
-        newcaption = sp.encode_as_ids(caption)
+
+    sp.SetEncodeExtraOptions(extra_option='bos:eos')
+    # Encode with sp to idx in the vocab
+    for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Encoding text captions as SP indices')):
+        newcaption = sp.EncodeAsIds(caption)
         df_txt["caption"].iloc[i] = newcaption
         if maxlen < len(newcaption):
             maxlen = len(newcaption)
-        print_progress_bar(i + 1, l, prefix='Progress enconding captions:', suffix='Complete', length=50, decimals=1)
 
-    for i, caption in enumerate(df_txt.caption.values):
-        df_txt["caption"].iloc[i] = pad_sequences([caption], maxlen=maxlen, value=3)
-        
+    # Encode onehot -> (max_len, vocab_size)
+    for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Onehot encoding of SP indices')):
+        padded = pad_sequences([caption], maxlen=maxlen, value=2, padding='post').flatten()
+        df_txt["caption"].iloc[i] = to_categorical(padded, num_classes=vocab_size)
+
     # Write to pickle file
-    df_txt.to_pickle(path="encoded_captionsencoded_captions.p")
+    # df_txt.to_pickle(path="encoded_captionsencoded_captions.p")
+
+    return df_txt
+
+
+def main2():
+    vocab= 2048
+    df_txt = read_captions(captions_path)
+    df_txt = clean_captions(df_txt)
+
+    # Save all of the captions as .txt for SP
+    np.savetxt(r'text_dataframe.txt', df_txt["caption"], fmt='%s')
+
+    # Train the SP and save it
+    train_sp('text_dataframe.txt', 'trained_sp', vocab)
+    sp = load_sp('trained_sp')
+
+    # Whoops this pickle is to big
+    # result = onehot_encode(df_txt, sp, vocab)
+    # result.to_pickle('encoded_captions.p')
+
+
+
+
+
+
+if __name__ == '__main__':
+    main2()
+    # Configure details
+    # warnings.filterwarnings("ignore")
+    # config = tf.ConfigProto()
+    # config.gpu_options.per_process_gpu_memory_fraction = 0.95
+    # config.gpu_options.visible_device_list = "0"
+    #
+    # # Start tf session
+    # set_session(tf.Session(config=config))
+    #
+    # # Read file
+    # print("Start reading file\n")
+    # text = read_file(captions_path)
+    # text = split_lines(text)
+    #
+    # # Create Dataframe with pandas
+    # df_txt = pd.DataFrame(text, columns=["image_idx", "caption_idx", "caption"])
+    # df_word = make_df_word(df_txt)
+    #
+    # if analysis:
+    #     print("Start file analysis\n")
+    #
+    #     # Find unique image_idx
+    #     uni_image_idx = np.unique(df_txt.image_idx.values)
+    #     print("The number of unique file names : {}".format(len(uni_image_idx)))
+    #     print("The distribution of the number of captions for each image:")
+    #     print(Counter(Counter(df_txt.image_idx.values).values()))
+    #     print()
+    #
+    #     # Word analysis
+    #     print("Most occuring words\n")
+    #     print(df_word.head(5))
+    #
+    #     plot_hist(df_word.iloc[:topn, :], title="The top " + str(topn) + " most frequently appearing words")
+    #     plot_hist(df_word.iloc[-topn:, :], title="The least " + str(topn) + " most frequently appearing words")
+    #
+    # # Clean text
+    # print("Start cleaning captions")
+    # l = len(df_txt.caption)
+    # print_progress_bar(0, l, prefix='Progress:', suffix='Complete', length=50)
+    # for i, caption in enumerate(df_txt.caption.values):
+    #     newcaption = text_clean(caption)
+    #     df_txt["caption"].iloc[i] = newcaption
+    #     print_progress_bar(i + 1, l, prefix='Progress cleaning captions:', suffix='Complete', length=50, decimals=1)
+    #
+    # # Analyze cleaned data
+    # if analysis:
+    #     dfword = make_df_word(df_txt)
+    #     plot_hist(dfword.iloc[:topn, :], title="The top " + str(topn) + " most frequently appearing words")
+    #     plot_hist(dfword.iloc[-topn:, :], title="The least " + str(topn) + " most frequently appearing words")
+    #
+    # # Save to txt for encoding
+    # np.savetxt(r'text_dataframe.txt', df_txt["caption"], fmt='%s')
+    #
+    # # Train SentencePiece Model
+    # model_prefix = "trained_sp"
+    # spm.SentencePieceTrainer.Train(f'--input=text_dataframe.txt --model_prefix={model_prefix} --vocab_size=2048 --pad_id=2 --unk_id=1 \
+    #          --bos_id=0 --eos_id=3 ')
+    #
+    # # Load trained model
+    # sp = spm.SentencePieceProcessor()
+    # sp.Load(f'{model_prefix}.model')
+    #
+    # # Encode all captions with sentencepiece
+    # print_progress_bar(0, l, prefix='Progress:', suffix='Complete', length=50)
+    # maxlen = 0
+    #
+    # sp.SetEncodeExtraOptions(extra_option='bos:eos')
+    # for i, caption in enumerate(df_txt.caption.values):
+    #     newcaption = sp.EncodeAsIds(caption)
+    #     df_txt["caption"].iloc[i] = newcaption
+    #     if maxlen < len(newcaption):
+    #         maxlen = len(newcaption)
+    #     print_progress_bar(i + 1, l, prefix='Progress enconding captions:', suffix='Complete', length=50, decimals=1)
+    #
+    # for i, caption in enumerate(df_txt.caption.values):
+    #     padded = pad_sequences([caption], maxlen=maxlen, value=2, padding='post').flatten()
+    #     df_txt["caption"].iloc[i] = to_categorical(padded, num_classes=2048)
+    #
+    # # Write to pickle file
+    # df_txt.to_pickle(path="encoded_captionsencoded_captions.p")
