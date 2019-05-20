@@ -9,6 +9,7 @@ from sklearn.decomposition import PCA
 from tensorflow.python.keras.applications.vgg16 import preprocess_input
 from tensorflow.python.keras.preprocessing.image import load_img, img_to_array
 from tqdm import tqdm
+import logging
 
 from models.cnn import DataPredictor
 
@@ -23,10 +24,14 @@ def files_to_prediction(dir_path):
     pixels = 224  # size required for VGG
     t_size = (pixels, pixels, 3)  # RGB requires 3 channels
 
-    files = os.listdir(os.path.join(root, dir_path))
+    files = os.listdir(dir_path)
     for i, fname in tqdm(enumerate(files)):
+        if not fname.endswith(".jpg"):
+            logging.warning("Encountered file that was not a .jpg in dataset -- {}".format(fname))
+
         # Read image
-        path = f"{root}{dir_path}/{fname}"
+        path = os.path.join(dir_path, fname)
+
         img = load_img(path, target_size=t_size)
 
         # To numpy data
@@ -40,7 +45,7 @@ def files_to_prediction(dir_path):
         images[fname] = dp.predict(img).flatten()
 
     # Save the results
-    pickle.dump(images, file=open(f"{root}{dir_path}/preprocessed.p", "wb"))
+    # pickle.dump(images, file=open(f"{root}{dir_path}/preprocessed.p", "wb"))
 
     return images
 
