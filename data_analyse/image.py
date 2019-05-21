@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 from collections import OrderedDict
@@ -9,7 +10,6 @@ from sklearn.decomposition import PCA
 from tensorflow.python.keras.applications.vgg16 import preprocess_input
 from tensorflow.python.keras.preprocessing.image import load_img, img_to_array
 from tqdm import tqdm
-import logging
 
 from models.cnn import DataPredictor
 
@@ -25,9 +25,10 @@ def files_to_prediction(dir_path):
     t_size = (pixels, pixels, 3)  # RGB requires 3 channels
 
     files = os.listdir(dir_path)
-    for i, fname in tqdm(enumerate(files)):
+    for i, fname in enumerate(tqdm(files, desc='Making VGG intermediate prediction')):
         if not fname.endswith(".jpg"):
-            logging.warning("Encountered file that was not a .jpg in dataset -- {}".format(fname))
+            logging.warning("Encountered file that was not a .jpg in dataset, ignore for now -- {}".format(fname))
+            continue
 
         # Read image
         path = os.path.join(dir_path, fname)
@@ -97,7 +98,7 @@ def analyse_pca(images: dict):
     plt.show()
 
 
-def load_flickr_train(images, text):
+def load_flickr_train(images, text, ):
     return load_flickr_set(images, text, 'Flickr_8k.trainImages.txt', test=False)
 
 
@@ -105,10 +106,13 @@ def load_flickr_test(images, text):
     return load_flickr_set(images, text, 'Flickr_8k.testImages.txt', test=True)
 
 
+def load_flickr_dev(images, text):
+    return load_flickr_set(images, text, 'Flickr_8k.testImages.txt', test=True)
+
+
 def load_flickr_set(images, text, file, test):
     dataset = OrderedDict()
-    p = f"{root}{text_dir}{file}"
-    with open(p, 'r', encoding='UTF-8') as f:
+    with open(file, 'r', encoding='UTF-8') as f:
         # Read the data
         name = f.readline().strip("\n")
         img_data = images[name]

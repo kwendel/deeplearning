@@ -6,10 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sentencepiece as spm
-import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
 from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
 from tqdm import tqdm
 
 # Path to captions file
@@ -104,6 +101,8 @@ def remove_single_character(text):
     for word in text.split():
         if len(word) > 1:
             text_len_more_than1 += " " + word
+
+    # Remove the first space again
     return text_len_more_than1
 
 
@@ -115,6 +114,7 @@ def remove_numeric(text, printTF=False):
             print("    {:10} : {:}".format(word, isalpha))
         if isalpha:
             text_no_numeric += " " + word
+
     return text_no_numeric
 
 
@@ -122,7 +122,8 @@ def text_clean(text_original):
     text = remove_punctuation(text_original)
     text = remove_single_character(text)
     text = remove_numeric(text)
-    # text = add_start_end_seq_token(text)
+    # Remove the starting space that was added
+    # text = text.lstrip()
     return text
 
 
@@ -183,35 +184,33 @@ def train_sp(in_path, out_path, vocab_size):
 def load_sp(in_path):
     # Load trained model
     sp = spm.SentencePieceProcessor()
-    sp.Load(f'{in_path}.model')
+    sp.Load(f'{in_path}')
 
     return sp
 
 
-def onehot_encode(df_txt, sp, vocab_size):
-    maxlen = 0
+def add_padding(df_txt, maxlength, space_tok=2):
+    # Pad each caption to maxlength
+    df_res = df_txt.copy()
+    for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Post padding to equal length')):
+        df_res['caption'].iloc[i] = pad_sequences([caption], maxlen=maxlength, value=space_tok,
+                                                  padding='post').flatten()
 
+    return df_res
+
+
+def encode_caption_as_ids(df_txt, sp):
+    df_res = df_txt.copy()
     sp.SetEncodeExtraOptions(extra_option='bos:eos')
     # Encode with sp to idx in the vocab
     for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Encoding text captions as SP indices')):
-        newcaption = sp.EncodeAsIds(caption)
-        df_txt["caption"].iloc[i] = newcaption
-        if maxlen < len(newcaption):
-            maxlen = len(newcaption)
+        df_res['caption'].iloc[i] = sp.EncodeAsIds(caption)
 
-    # Encode onehot -> (max_len, vocab_size)
-    for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Onehot encoding of SP indices')):
-        padded = pad_sequences([caption], maxlen=maxlen, value=2, padding='post').flatten()
-        df_txt["caption"].iloc[i] = to_categorical(padded, num_classes=vocab_size)
-
-    # Write to pickle file
-    # df_txt.to_pickle(path="encoded_captionsencoded_captions.p")
-
-    return df_txt
+    return df_res
 
 
 def main2():
-    vocab= 2048
+    vocab = 2048
     df_txt = read_captions(captions_path)
     df_txt = clean_captions(df_txt)
 
@@ -225,10 +224,6 @@ def main2():
     # Whoops this pickle is to big
     # result = onehot_encode(df_txt, sp, vocab)
     # result.to_pickle('encoded_captions.p')
-
-
-
-
 
 
 if __name__ == '__main__':
