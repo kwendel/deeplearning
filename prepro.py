@@ -38,12 +38,6 @@ def prepro(hp):
     hp: hyperparams. argparse.
     """
 
-    # Define directory paths
-    dir_path = os.path.join(os.getcwd(), "dataset", "Flickr8k")
-    images_path = os.path.join(dir_path, "Flickr8k_Dataset", "Flicker8k_Dataset")
-    text_path = os.path.join(dir_path, "Flickr8k_text")
-    prepro_path = os.path.join(dir_path, "prepro")
-
     # Check directory paths
     logging.info("# Using directories")
     logging.info(f"Dataset directory -- {dir_path}")
@@ -148,10 +142,58 @@ def prepro(hp):
     __write_set(test_path, 'test_set.pkl', test=True)
 
 
+def test_prepro():
+    logging.info("Test if the pickles can be decoded correctly")
+    dev_path = os.path.join(prepro_path, 'dev_set.pkl')
+    train_path = os.path.join(prepro_path, 'train_set.pkl')
+    test_path = os.path.join(prepro_path, 'test_set.pkl')
+    dev = pickle.load(open(dev_path, 'rb'))
+    trn = pickle.load(open(train_path, 'rb'))
+    tst = pickle.load(open(test_path, 'rb'))
+
+    model_path = os.path.join(prepro_path, 'trained_sp.model')
+    sp = load_sp(model_path)
+
+    def __print_random(values):
+        id, x, ys = rn.choice(values)
+
+        print(f"Picture -- {id}")
+        print("VGG Picture data")
+        print(x)
+        print("Encoded captions")
+        print(ys)
+
+        if type(ys) is tuple:
+            # Multiple labels
+            captions = [sp.DecodeIds(y.tolist()) for y in ys]
+            print(captions)
+        else:
+            print(sp.DecodeIds(ys.tolist()))
+
+    print("Dev set")
+    __print_random(list(dev.values()))
+    print("Train set")
+    __print_random(list(trn.values()))
+    print("Test set")
+    __print_random(list(tst.values()))
+
+
 if __name__ == '__main__':
+    # Parse cmdline arguments
     hparams = Hparams()
     parser = hparams.parser
     hp = parser.parse_args()
+
+    # Define directory paths
+    dir_path = os.path.join(os.getcwd(), "dataset", "Flickr8k")
+    images_path = os.path.join(dir_path, "Flickr8k_Dataset", "Flicker8k_Dataset")
+    text_path = os.path.join(dir_path, "Flickr8k_text")
+    prepro_path = os.path.join(dir_path, "prepro")
+
+    # Preprocess the data
     setseed()
     prepro(hp)
+
+    # Test the preprocessed files
+    test_prepro()
     logging.info("Done")
