@@ -7,6 +7,8 @@ class Hparams:
     # prepro
     # parser.add_argument('--vocab_size', default=32000, type=int)
     parser.add_argument('--vocab_size', default=2048, type=int)
+    # Debug argument
+    # parser.add_argument('--vocab_size', default=20, type=int)
 
     # train
     ## files

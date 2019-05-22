@@ -112,24 +112,52 @@ def load_flickr_dev(images, text):
 
 def load_flickr_set(images, text, file, test):
     dataset = OrderedDict()
-    with open(file, 'r', encoding='UTF-8') as f:
-        # Read the data
-        name = f.readline().strip("\n")
-        img_data = images[name]
-        text_data = text[text['image_idx'] == name]
+    set_ids = read_ids(file)
+
+    for pic_id in tqdm(set_ids, desc="Generating Flickr dataset"):
+        img_data = images[pic_id]
+        text_data = text[text['image_idx'] == pic_id]
 
         # For testing data, we want all available captions as true labels
+        # result -> (id, x, (y1, y2, .., y5))
         if test:
-            dataset[name] = (img_data,)
+            labels = ()
             for idx, row in text_data.iterrows():
-                dataset[name] = dataset[name] + (row['caption'],)
+                labels += (row['caption'],)
+
+            dataset[pic_id] = (pic_id, img_data, labels)
         # For training data, we want to use the captions to generate new training objects
+        # result -> (id, x, y)
         else:
             for idx, row in text_data.iterrows():
-                new_name = name + '-' + row['caption_idx']
-                dataset[new_name] = (img_data, row['caption'])
+                new_name = pic_id + '-' + row['caption_idx']
+                dataset[new_name] = (new_name, img_data, row['caption'])
 
     return dataset
+
+
+def read_ids(file):
+    set_ids = []
+    with open(file, 'r', encoding='UTF-8') as f:
+        # Read the data
+        for line in f:
+            # Strip the ending newline char
+            set_ids.append(line.strip("\n"))
+
+    return set_ids
+
+
+def get_caption_set(text, file):
+    set_ids = read_ids(file)
+    result = []
+
+    for pic_id in tqdm(set_ids, desc="Generating captions training set"):
+        text_data = text[text['image_idx'] == pic_id]
+
+        for _, row in text_data.iterrows():
+            result.append(row['caption'])
+
+    return result
 
 
 if __name__ == '__main__':
