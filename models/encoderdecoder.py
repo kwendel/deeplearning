@@ -1,6 +1,6 @@
 import tensorflow as tf
-from cnn import CNN
-from transformer import Transfomer
+from encoder import Encoder
+from transformer import Transformer
 from utils.data_load import load_vocab
 from utils.modules import label_smoothing, noam_scheme
 from utils.utils import convert_idx_to_token_tensor
@@ -15,8 +15,8 @@ class EncoderDecoder:
 
     def __init__(self, hp):
         self.hp = hp
-        self.encoder = CNN(hp)
-        self.decoder = Transfomer(hp)
+        self.encoder = Encoder(hp)
+        self.decoder = Transformer(hp)
 
         # TODO:
         self.token2idx, self.idx2token = load_vocab(hp.vocab)
@@ -25,7 +25,7 @@ class EncoderDecoder:
 
 
     def train(self, xs, ys):
-        memory, info = self.encoder.encode(xs)
+        memory = self.encoder.encode(xs)
         logits, yhat, y, length = self.decoder.decode(ys, memory, training=True)
 
         # train scheme
@@ -58,7 +58,7 @@ class EncoderDecoder:
         decoder_inputs = tf.ones((tf.shape(xs[0])[0], 1), tf.int32) * self.token2idx["<s>"]
         ys = (decoder_inputs, y, y_seqlen, sents2)
 
-        memory, sents1 = self.encoder.encode(xs)
+        memory = self.encoder.encode(xs)
 
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):
@@ -69,14 +69,14 @@ class EncoderDecoder:
             ys = (_decoder_inputs, y, y_seqlen, sents2)
 
         # monitor a random sample
-        n = tf.random_uniform((), 0, tf.shape(y_hat)[0] - 1, tf.int32)
-        sent1 = sents1[n]
-        pred = convert_idx_to_token_tensor(y_hat[n], self.idx2token)
-        sent2 = sents2[n]
+        # n = tf.random_uniform((), 0, tf.shape(y_hat)[0] - 1, tf.int32)
+        # sent1 = sents1[n]
+        # pred = convert_idx_to_token_tensor(y_hat[n], self.idx2token)
+        # sent2 = sents2[n]
 
-        tf.summary.text("sent1", sent1)
-        tf.summary.text("pred", pred)
-        tf.summary.text("sent2", sent2)
+        # tf.summary.text("sent1", sent1)
+        # tf.summary.text("pred", pred)
+        # tf.summary.text("sent2", sent2)
         summaries = tf.summary.merge_all()
 
         return y_hat, summaries
