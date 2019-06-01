@@ -58,6 +58,7 @@ class Transfomer:
         # Final linear projection (embedding weights are shared)
         weights = tf.transpose(self.embeddings)  # (d_model, vocab_size)
         logits = tf.einsum('ntd,dk->ntk', dec, weights)  # (N, T2, vocab_size)
+#          TODO: hier wordt er een one hot van gemaakt. Wij moeten onze eigen embedding houden. Dit
         y_hat = tf.to_int32(tf.argmax(logits, axis=-1))
 
         return logits, y_hat, y, sents2
