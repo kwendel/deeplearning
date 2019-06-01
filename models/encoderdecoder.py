@@ -29,6 +29,7 @@ class EncoderDecoder:
         logits, yhat, y, length = self.decoder.decode(ys, memory, training=True)
 
         # train scheme
+        # one-hot moet er nu toch uit?
         y_ = label_smoothing(tf.one_hot(y, depth=self.hp.vocab_size))
         ce = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=y_)
         nonpadding = tf.to_float(tf.not_equal(y, self.token2idx["<pad>"]))  # 0: <pad>
