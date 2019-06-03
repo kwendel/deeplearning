@@ -21,7 +21,8 @@ class Encoder:
         '''
         with tf.variable_scope("encoder", reuse=tf.AUTO_REUSE):
 
-            enc =  tf.get_variable('image', xs, dtype=tf.float32)
+            sampleId, image = xs
+            enc =  tf.get_variable('image', image, dtype=tf.float32)
             enc = ff(enc, num_units=[self.hp.d_ff, self.hp.d_model], scope='encoder')
 
         return enc

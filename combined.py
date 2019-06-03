@@ -21,11 +21,10 @@ save_hparams(hp, hp.logdir)
 
 logging.info("# Prepare train/eval batches")
 train_batches, num_train_batches, num_train_samples = get_batch(hp.train,
-                                             hp.maxlen1, hp.maxlen2,
+                                             hp.maxlen,
                                              hp.vocab, hp.batch_size,
                                              shuffle=True)
-eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval1, hp.eval2,
-                                             100000, 100000,
+eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval, 100000,
                                              hp.vocab, hp.batch_size,
                                              shuffle=False)
 

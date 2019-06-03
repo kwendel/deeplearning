@@ -25,7 +25,7 @@ class EncoderDecoder:
 
 
     def train(self, xs, ys):
-        memory = self.encoder.encode(xs)
+        memory = self.encoder.encode(xs, training=True)
         logits, yhat, y, length = self.decoder.decode(ys, memory, training=True)
 
         # train scheme
