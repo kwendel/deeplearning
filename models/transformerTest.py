@@ -1,6 +1,7 @@
 import tensorflow as tf
-from transformer import Transfomer
 import numpy as np
+
+from transformer import Transfomer
 from utils.hparams import Hparams
 
 Hp = Hparams()
