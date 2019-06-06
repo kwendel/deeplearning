@@ -15,9 +15,6 @@ class Hparams:
     parser.add_argument('--dev', default=f'{default_dir}/dev_set.pkl')
     parser.add_argument('--test', default=f'{default_dir}/train_set.pkl')
 
-    ## vocabulary
-    parser.add_argument('--vocab', default=f'{default_dir}/trained_sp.vocab',
-                        help="vocabulary file path")
 
     # training scheme
     parser.add_argument('--batch_size', default=128, type=int)
