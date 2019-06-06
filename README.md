@@ -9,7 +9,22 @@ Image caption generation using an encoder-decoder neural network architecture. V
 - K. Wendel
 
 ### Requirements
+**Code**  
 Project requirements can be found in `requirements.txt` and can be installed with `pip install -r requirements.txt`
+
+**Pretrained models**  
+Preprocessing uses a pretrained VGG16 and GloVe Word2Vec. Please download the pretrained models.
+- VGG16: https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5
+- GloVe: http://nlp.stanford.edu/data/glove.6B.zip 
+```
+- project root
+│
+└---models
+    └---pretrained
+        |--- vgg16_weights_tf_dim_ordering_tf_kernels.h5
+        └--- glove.6B
+            └--- glove.6B.50d.txt
+``` 
 
 ### Dataset -- Flickr8k
 The Flicker8k dataset is used in this project and can be downloaded online (or contact the authors for a torrent).
