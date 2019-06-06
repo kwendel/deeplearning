@@ -14,14 +14,14 @@ import os
 import pickle
 import random as rn
 
-import numpy as np
 import pandas as pd
 from numpy.random import seed
 from tensorflow import set_random_seed
 
-from preprocess.dataset import load_flickr_set, get_caption_set
+from preprocess.dataset import load_flickr_set
 from preprocess.image import files_to_prediction
-from preprocess.text import read_captions, clean_captions, train_sp, load_sp, encode_caption_as_ids, add_padding
+from preprocess.text import read_captions, clean_captions
+from preprocess.word2vec import create_embeddings
 from utils.hparams import Hparams
 
 logging.basicConfig(level=logging.INFO)
@@ -85,61 +85,28 @@ def prepro(hp):
         logging.info("# Caption pickle saved in -- {}".format(caption_pickle))
         captions.to_pickle(path=caption_pickle)
 
-    # Train the SentencePiece model on the training captions
-    logging.info("# Checking SP model")
-    model_prefix = os.path.join('dataset', 'Flickr8k', 'prepro', 'trained_sp')
-    model_path = os.path.join(prepro_path, 'trained_sp.model')
-    vocab_path = os.path.join(prepro_path, 'trained_sp.vocab')
-    if os.path.exists(model_path) and os.path.exists(vocab_path):
-        logging.info("# Load SP model from -- {}".format(model_path))
-        # Load the sp model
-        sp = load_sp(model_path)
-    else:
-        # IMPORTANT: only train the sp on the training samples!!
-        logging.info("# Gather training captions")
-        trn_captions = get_caption_set(captions, train_path)
-
-        # Save the captions as numpy array
-        trn_captions_path = os.path.join('dataset', 'Flickr8k', 'prepro', 'train_captions.txt')
-        np.savetxt(trn_captions_path, np.array(trn_captions), fmt='%s')
-
-        # Train the SP model with the training captions
-        logging.info("# Train SP with training captions")
-        train_sp(trn_captions_path, model_prefix, hp.vocab_size)
-        sp = load_sp(model_path)
-
-    # Encode the captions as ids with SP
-    enc_path = os.path.join(prepro_path, 'enc_caps')
-    pad_path = os.path.join(prepro_path, 'pad_caps')
-    if os.path.exists(enc_path):
-        enc_caps = pickle.load(open(enc_path, 'rb'))
-    else:
-        enc_caps = encode_caption_as_ids(captions, sp)
-        pickle.dump(enc_caps, file=open(enc_path, "wb"))
-
-    # Check the max length of the encoded captions
-    max_length = enc_caps['caption'].map(len).max()
+    # Check the max length of the the captions
+    max_length = captions['caption'].str.split(" ").map(len).max()
     logging.info(f"# Max length of encoded caption = {max_length}")
+    logging.critical(f"Set Hyperparameter max length to = {max_length + 2} (maxlength+start/end token)")
 
-    # Pad senteces to equal length
-    if os.path.exists(pad_path):
-        pad_caps = pickle.load(open(pad_path, 'rb'))
-    else:
-        pad_caps = add_padding(enc_caps, max_length)
-        pickle.dump(pad_caps, file=open(pad_path, "wb"))
+    # Check if we have the embeddings of Word2Vec
+    if 'word2vec' not in captions.columns:
+        captions = create_embeddings(captions, max_length)
+        captions.to_pickle(path=caption_pickle)
 
     # Create the predefined splits with our preprocessed data
     logging.info("# Making data splits with encoded and padded captions")
 
     def __write_set(path, name, test):
-        dataset = load_flickr_set(images, pad_caps, path, test=test)
+        dataset = load_flickr_set(images, captions, path, test=test)
         p = os.path.join(prepro_path, name)
         pickle.dump(dataset, file=open(p, 'wb'))
         logging.info(f"Succesfully saved in {p}")
 
     __write_set(dev_path, 'dev_set.pkl', test=False)
     __write_set(train_path, 'train_set.pkl', test=False)
-    __write_set(test_path, 'test_set.pkl', test=True)
+    __write_set(test_path, 'test_set.pkl', test=False)
 
 
 def test_prepro():
@@ -151,9 +118,6 @@ def test_prepro():
     trn = pickle.load(open(train_path, 'rb'))
     tst = pickle.load(open(test_path, 'rb'))
 
-    model_path = os.path.join(prepro_path, 'trained_sp.model')
-    sp = load_sp(model_path)
-
     def __print_random(values):
         id, x, ys = rn.choice(values)
 
@@ -163,12 +127,12 @@ def test_prepro():
         print("Encoded captions")
         print(ys)
 
-        if type(ys) is tuple:
-            # Multiple labels
-            captions = [sp.DecodeIds(y.tolist()) for y in ys]
-            print(captions)
-        else:
-            print(sp.DecodeIds(ys.tolist()))
+        # if type(ys) is tuple:
+        #     # Multiple labels
+        #     captions = [sp.DecodeIds(y.tolist()) for y in ys]
+        #     print(captions)
+        # else:
+        #     print(sp.DecodeIds(ys.tolist()))
 
     print("Dev set")
     __print_random(list(dev.values()))

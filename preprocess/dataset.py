@@ -8,8 +8,10 @@ def load_flickr_set(images, text, file, test):
     Produces a ordered dict of tuples of data and label from the ids defined in file.
     Train Structure:
     {
-        id: (id, img_data, caption)
+        id: (id, img_data, word vector)
     }
+
+    TODO: THIS IS NOT USED RIGHT NOW:
     Test Structure:
     {
         id: (id, img_data, (c1, c2, c3, c4, c5))
@@ -36,12 +38,13 @@ def load_flickr_set(images, text, file, test):
                 labels += (row['caption'],)
 
             dataset[pic_id] = (pic_id, img_data, labels)
+
         # For training data, we want to use the captions to generate new training objects
         # result -> (id, x, y)
         else:
             for idx, row in text_data.iterrows():
                 new_name = pic_id + '-' + row['caption_idx']
-                dataset[new_name] = (new_name, img_data, row['caption'])
+                dataset[new_name] = (new_name, img_data, row['word2vec'])
 
     return dataset
 

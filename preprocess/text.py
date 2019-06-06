@@ -91,7 +91,7 @@ def text_clean(text_original):
     text = remove_single_character(text)
     text = remove_numeric(text)
     # Remove the starting space that was added
-    # text = text.lstrip()
+    text = text.lstrip()
     return text
 
 
