@@ -12,18 +12,18 @@ class Transfomer:
 
     def decode(self, ys, memory, training=True):
         '''
-        memory: encoder outputs. (N, T1, d_model)
+        memory: encoder outputs. (N, T1, d_model). float32.
 
         Returns
-        y_hat: (N, T2, d_model). float32
-        y: (N, T2, d_model). float32
-        sents2: (N,). string.
+        y_hat: (N, T2, V). float32.
+        y: (N, T2, V). float32.
+        sents2: (N,). string. (staat deze er nog in?)
         '''
         with tf.variable_scope("decoder", reuse=tf.AUTO_REUSE):
             decoder_inputs, y, seqlens, sents2 = ys
 
             # embedding
-            dec = decoder_inputs  # (N, T2, d_model)
+            dec = decoder_inputs  # (N, T2, V)
             dec *= self.hp.d_model ** 0.5  # scale
 
             dec += positional_encoding(dec, self.hp.maxlen2)

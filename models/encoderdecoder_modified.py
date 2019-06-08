@@ -19,7 +19,11 @@ class EncoderDecoder:
         self.decoder = Transformer(hp)
 
         # TODO:
-        self.token2idx, self.idx2token = load_vocab(hp.vocab)
+        self.embedding 
+        # met hierin
+            # embedding.start() --> geeft tf.constant(START_VEC, dtype = tf.float32) with shape (1,52)
+            # embedding.stop()  --> geeft tf.constant(STOP_VEC, dtype = tf.float32) with shape (1,52)
+            # embedding.
 
     def train(self, xs, ys):
         memory = self.encoder.encode(xs, training=True)
@@ -47,11 +51,11 @@ class EncoderDecoder:
         '''Predicts autoregressively
         At inference, input ys is ignored.
         Returns
-        y_hat: (N, T2)
+        y_hat: (N, T2, V)
         '''
         decoder_inputs, y, y_seqlen, sents2 = ys
-
-        decoder_inputs = tf.ones((tf.shape(xs[0])[0], 1), tf.int32) * self.token2idx["<s>"]
+  
+        decoder_inputs = tf.ones((tf.shape(xs[1])[0], 1, 52), tf.int32) * self.embedding.start()
         ys = (decoder_inputs, y, y_seqlen, sents2)
 
         memory = self.encoder.encode(xs)
@@ -59,6 +63,13 @@ class EncoderDecoder:
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):
             y_hat, y, sents2 = self.decoder.decode(ys, memory, False)
+            '''
+            HELP (WD): Ik zie echt niet wat ik hiervan moet maken. De pad moet volgens mij
+            wel blijven, want je moet pas stoppen als overal een pad komt. 
+            Ik zie alleen niet hoe hier ooit true uit gaat komen. De reduce_sum
+            gaat over de laatste dimensie en dat is de hele zin (hier komt dan
+            geen 0 uit toch?)
+            '''
             if tf.reduce_sum(y_hat, 1) == self.token2idx["<pad>"]: break
 
             _decoder_inputs = tf.concat((decoder_inputs, y_hat), 1)
