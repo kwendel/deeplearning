@@ -1,27 +1,28 @@
-import tensorflow as tf
-from utils.modules import get_token_embeddings, ff, positional_encoding, multihead_attention
 import logging
+
+import tensorflow as tf
+
+from utils.modules import ff
 
 logging.basicConfig(level=logging.INFO)
 
 
 class Encoder:
+    """
+    Encoder: this class is used for applying a fully connected Feedforward layer with ReLu activation on the VGG
+    predictions. T
+    """
+
     def __init__(self, hp):
         self.hp = hp
 
-    def encode(self, xs, training=True):
+    def encode(self, xs):
         '''
-        memory: encoder outputs. (N, T1, d_model)
+        xs: image data (N,T,C) -> (batch_size, 196,512)
 
-        Returns
-        logits: (N, T2, V). float32.
-        y_hat: (N, T2). int32
-        y: (N, T2). int32
-        sents2: (N,). string.
+        enc: encoded image data -> (batch_size,??)
+
         '''
-        with tf.variable_scope("encoder", reuse=tf.AUTO_REUSE):
-
-            sampleId, image = xs
-            enc = ff(image, num_units=[self.hp.d_ff, self.hp.d_model], scope='encoder')
+        enc = ff(xs, num_units=[self.hp.d_ff, self.hp.d_model], scope='vgg-encoder')
 
         return enc

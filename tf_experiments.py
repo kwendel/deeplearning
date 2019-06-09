@@ -4,7 +4,8 @@ import pickle
 import tensorflow as tf
 
 from utils.utils import calc_num_batches
-
+from models.encoderdecoder_modified import EncoderDecoder
+from utils.hparams import Hparams
 
 # def load_vocab(vocab_fpath):
 #     '''Loads vocabulary file and returns idx<->token maps
@@ -130,17 +131,31 @@ def get_batch(fpath, batch_size, shuffle=False):
 
 
 if __name__ == '__main__':
-    # Try to iterate over the dataset with tf.data.Dataset
+    # Eager execution
     tf.enable_eager_execution()
-
     dir_path = os.getcwd()
 
-    data = 'dataset/Flickr8k/prepro/train_set.pkl'
-    vocab = 'dataset/Flickr8k/prepro/trained_sp.vocab'
-    b_size = 128
+    # Parse hyperparameters
+    hparams = Hparams()
+    parser = hparams.parser
+    hp = parser.parse_args()
+    print(hp)
 
-    b, num_b, num_s = get_batch(data, b_size, shuffle=False)
+    # Create batches
+    train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, shuffle=False)
 
-    for val in b.take(1):
-        tf.print(val)
-        print(val)
+
+    # Try to mimick the train.py script with eager execution()
+    # create a iterator of the correct shape and type
+    iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
+    train_init_op = iter.make_initializer(train_batches)
+
+    id, xs, ys = iter.get_next()
+
+    # Model things
+    print("Loading model")
+
+    m = EncoderDecoder(hp)
+
+    loss, train_op, global_step, train_summaries = m.train(xs, ys)
+

@@ -5,10 +5,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-class Transfomer:
+class Transformer:
     def __init__(self, hp):
         self.hp = hp
-        self.embeddings = get_token_embeddings(self.hp.vocab_size, self.hp.d_model, zero_pad=True)
+        # self.embeddings = get_token_embeddings(self.hp.vocab_size, self.hp.d_model, zero_pad=True)
 
     def decode(self, ys, memory, training=True):
         '''
@@ -20,11 +20,12 @@ class Transfomer:
         sents2: (N,). string. (staat deze er nog in?)
         '''
         with tf.variable_scope("decoder", reuse=tf.AUTO_REUSE):
-            decoder_inputs, y, seqlens, sents2 = ys
+            # Word2Vec embedding
+            decoder_inputs = ys
 
             # embedding
             dec = decoder_inputs  # (N, T2, V)
-            dec *= self.hp.d_model ** 0.5  # scale
+            # dec *= self.hp.d_model ** 0.5  # scale
 
             dec += positional_encoding(dec, self.hp.maxlen2)
             dec = tf.layers.dropout(dec, self.hp.dropout_rate, training=training)
@@ -57,4 +58,4 @@ class Transfomer:
         
         y_hat = dec
 
-        return y_hat, y, sents2
+        return y_hat

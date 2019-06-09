@@ -15,7 +15,6 @@ class Hparams:
     parser.add_argument('--dev', default='%s./dev_set.pkl' % default_dir)
     parser.add_argument('--test', default='%s./train_set.pkl' % default_dir)
 
-
     # training scheme
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--eval_batch_size', default=128, type=int)
@@ -33,21 +32,21 @@ class Hparams:
                         help="hidden dimension of feedforward layer")
     parser.add_argument('--num_blocks', default=6, type=int,
                         help="number of encoder/decoder blocks")
-    parser.add_argument('--num_heads', default=8, type=int,
+    # Num heads must split 52 into equal parts
+    parser.add_argument('--num_heads', default=4, type=int,
                         help="number of attention heads")
-    parser.add_argument('--maxlen1', default=100, type=int,
-                        help="maximum length of a source sequence")
-    parser.add_argument('--maxlen2', default=100, type=int,
-                        help="maximum length of a target sequence")
     parser.add_argument('--dropout_rate', default=0.3, type=float)
     parser.add_argument('--smoothing', default=0.1, type=float,
                         help="label smoothing rate")
 
+    parser.add_argument('--maxlen1', default=34, type=int, help="maximum length of a source sequence")
+    parser.add_argument('--maxlen2', default=34, type=int, help="maximum length of a target sequence")
+
     # test
-    parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
-                        help="german test segmented data")
-    parser.add_argument('--test2', default='iwslt2016/prepro/test.en',
-                        help="english test data")
-    parser.add_argument('--ckpt', help="checkpoint file path")
-    parser.add_argument('--test_batch_size', default=128, type=int)
-    parser.add_argument('--testdir', default="test/1", help="test result dir")
+    # parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
+    #                     help="german test segmented data")
+    # parser.add_argument('--test2', default='iwslt2016/prepro/test.en',
+    #                     help="english test data")
+    # parser.add_argument('--ckpt', help="checkpoint file path")
+    # parser.add_argument('--test_batch_size', default=128, type=int)
+    # parser.add_argument('--testdir', default="test/1", help="test result dir")
