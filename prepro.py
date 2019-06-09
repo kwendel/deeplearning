@@ -122,10 +122,26 @@ def test_prepro():
         id, x, ys = rn.choice(values)
 
         print(f"Picture -- {id}")
-        print("VGG Picture data")
+        print("Flattened VGG Picture data:")
         print(x)
-        print("Encoded captions")
+
+        # Now do a size check
+        vggsize = 196 * 512
+        got = len(x)
+        print(f"Expected vgg size: {vggsize}, got: {got}")
+        if vggsize != got:
+            logging.error("VGG predictions are not of the correct size!!")
+
+        print("Flattened Embedded captions:")
         print(ys)
+
+        # Size check
+        word2vec_size = 34 * 52
+        got = len(ys)
+        print(f"Expected embedding size: {word2vec_size}, got: {got}")
+
+        if word2vec_size != got:
+            logging.error("Word2Vec Embeddings are not of the correct size!!")
 
         # if type(ys) is tuple:
         #     # Multiple labels

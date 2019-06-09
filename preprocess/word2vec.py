@@ -48,10 +48,18 @@ def compute_average(w2v: dict, vec_dim=VEC_DIM):
 
 
 def load_w2v(path):
+    # For now, hardcode the GloVe 50 dimension
+    dims = 50
+
     w2v = dict()
-    with open(path, "rb") as lines:
+    with open(path, "r", encoding='UTF-8') as lines:
         for line in lines:
-            vec = line.decode('UTF-8').split()
+            vec = line.split()
+
+            # Check if what we read makes sense
+            if len(vec[1:]) != dims:
+                raise ValueError(f"GloVe Word2Vec -- wrong dimensions! Expected {dims}, got {len(vec[1:])} for word {vec[0]}")
+
             v = np.array(list(map(float, vec[1:])), dtype=float)
             w2v[vec[0]] = np.concatenate((v, ZERO_COLS))
     return w2v
@@ -74,11 +82,6 @@ def embed_sentence(w2v, sentence, max_length, vec_dim=VEC_DIM):
         return v
 
     for i, w in enumerate(words):
-        # The first word contains a leading whitespace
-        # We check in this way as this is faster
-        if i == 0:
-            w = w.lstrip()
-
         v = __getvec(w)
         # i+1 as the first row was the start token
         if v.shape[0] == 52:

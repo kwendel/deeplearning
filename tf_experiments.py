@@ -84,7 +84,7 @@ def input_fn(fpath, batch_size, shuffle):
     Returns
     xs: tuple of
         id: picture_id  -- (N,)
-        x: array of flattened VGG output (192,512) flattened -- (N,192*512)
+        x: array of flattened VGG output (196,512) flattened -- (N,196*512)
     labels: tuple of
         id: picture_id -- (N,)
         y: list of token id of the caption (,max_length) -- (N,max_length)
