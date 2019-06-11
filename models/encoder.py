@@ -1,7 +1,5 @@
 import logging
 
-import tensorflow as tf
-
 from utils.modules import ff
 
 logging.basicConfig(level=logging.INFO)
@@ -17,12 +15,12 @@ class Encoder:
         self.hp = hp
 
     def encode(self, xs):
-        '''
+        """
         xs: image data (N,T,C) -> (batch_size, 196,512)
 
         enc: encoded image data -> (batch_size,??)
 
-        '''
+        """
         enc = ff(xs, num_units=[self.hp.d_ff_enc, self.hp.d_model_enc], scope='vgg-encoder', residual=False)
 
         return enc
