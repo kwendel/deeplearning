@@ -1,11 +1,10 @@
 import logging
 
-import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
 from encoder import Encoder
-from preprocess.word2vec import START_VEC, END_VEC, UNK_VEC
+from preprocess.word2vec import START_VEC, END_VEC, UNK_VEC, PAD_VEC
 from transformer_modified import Transformer
 from utils.modules import noam_scheme
 
@@ -20,10 +19,10 @@ class EncoderDecoder:
         self.decoder = Transformer(hp)
 
         self.embedding = {
-            'start': tf.convert_to_tensor(START_VEC, dtype=float),
-            'end': tf.convert_to_tensor(END_VEC, dtype=float),
-            'unk': tf.convert_to_tensor(UNK_VEC, dtype=float),
-            'pad': tf.convert_to_tensor(np.zeros_like(START_VEC), dtype=float)
+            'start': tf.convert_to_tensor(START_VEC, dtype=tf.float32),
+            'end': tf.convert_to_tensor(END_VEC, dtype=tf.float32),
+            'unk': tf.convert_to_tensor(UNK_VEC, dtype=tf.float32),
+            'pad': tf.convert_to_tensor(PAD_VEC, dtype=tf.float32)
         }
 
     def train(self, xs, ys):
@@ -32,7 +31,7 @@ class EncoderDecoder:
 
         yhat_n = tf.linalg.l2_normalize(yhat, axis=-1)
         y_n = tf.linalg.l2_normalize(ys, axis=-1)
-        # train scheme 
+        # train scheme
         loss = tf.losses.cosine_distance(y_n, yhat_n, axis=-1)
 
         global_step = tf.train.get_or_create_global_step()
@@ -55,27 +54,32 @@ class EncoderDecoder:
         y_hat: (N, T2, V)
         '''
 
-        # Start with a ??
-        decoder_inputs = tf.ones((tf.shape(xs[1])[0], 1, 52), tf.int32) * self.embedding['start']
+        # Initialize batch (N, 1, 52) with only first row with the start token
+        y_start = tf.ones((tf.shape(xs)[0], 1, 52), tf.float32) * self.embedding['start']
+        y_in = y_start
 
+        # Use Encoder to generate memory of the picture
         memory = self.encoder.encode(xs)
 
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):
-            y_hat = self.decoder.decode(ys, memory, training=False)
-            '''
-            HELP (WD): Ik zie echt niet wat ik hiervan moet maken. De pad moet volgens mij
-            wel blijven, want je moet pas stoppen als overal een pad komt. 
-            Ik zie alleen niet hoe hier ooit true uit gaat komen. De reduce_sum
-            gaat over de laatste dimensie en dat is de hele zin (hier komt dan
-            geen 0 uit toch?)
-            '''
-            if tf.reduce_sum(y_hat, 1) == self.embedding['pad']: break
+            y_hat = self.decoder.decode(y_in, memory, training=False)
 
-            _decoder_inputs = tf.concat((decoder_inputs, y_hat), 1)
-            # ys = (_decoder_inputs, y, y_seqlen, sents2)
+            # TODO: maybe this is to strict? We can also do something like tf.math.less_equal(abs(rows - pad), epsi)...
+            # Check if the last row is completely/element-wise the same as the pad token
+            equals = tf.math.equal(y_hat[:, -1, :], self.embedding['pad'])
 
-        # monitor a random sample
+            # Check for all batches at the same time if this is the case
+            if tf.reduce_all(equals):
+                # Then we can stop evaluating
+                break
+
+            # Grow the input to the decoder with one row
+            y_in = tf.concat((y_start, y_hat), 1)
+
+        # TODO: monitor a random sample
+        # true value is ys, last prediction is y_hat
+
         # n = tf.random_uniform((), 0, tf.shape(y_hat)[0] - 1, tf.int32)
         # sent1 = sents1[n]
         # pred = convert_idx_to_token_tensor(y_hat[n], self.idx2token)
@@ -84,6 +88,7 @@ class EncoderDecoder:
         # tf.summary.text("sent1", sent1)
         # tf.summary.text("pred", pred)
         # tf.summary.text("sent2", sent2)
-        summaries = tf.summary.merge_all()
+        # summaries = tf.summary.merge_all()
+        summaries = None
 
         return y_hat, summaries

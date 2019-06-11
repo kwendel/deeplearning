@@ -28,12 +28,9 @@ UNK_VEC = np.concatenate((UNK_VEC, ZERO_COLS))
 # This makes our embedding dimension 50 (glove) + 2 (extra)
 VEC_DIM = 52
 
-
-# Also we add the zero_cols to the word2vec embedding
-
-
-# We use np.pad for padding
-# PAD_VEC = np.zeros((1, 50 + 2))
+# We use np.pad for padding, but pad rows are equal to PAD_VEC
+pad_val = 1.0
+PAD_VEC = np.ones((50 + 2), dtype=float)
 
 
 def compute_average(w2v, vec_dim=VEC_DIM):
@@ -113,7 +110,6 @@ def create_embeddings(df_captions, max_length):
     # Save as a new column and return the df
     df_captions['word2vec'] = embeddings
     return df_captions
-
 
 # if __name__ == '__main__':
 # captions = pickle.load(open(captions_path, 'rb'))
