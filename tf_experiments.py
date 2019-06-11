@@ -4,7 +4,6 @@ import random
 
 import tensorflow as tf
 
-from models.encoderdecoder import EncoderDecoder
 from utils.hparams import Hparams
 from utils.utils import calc_num_batches
 
