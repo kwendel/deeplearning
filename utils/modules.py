@@ -201,7 +201,7 @@ def multihead_attention(queries, keys, values,
  
     return outputs
 
-def ff(inputs, num_units, scope="positionwise_feedforward"):
+def ff(inputs, num_units, scope="positionwise_feedforward", residual=True):
     '''position-wise feed forward net. See 3.3
     
     inputs: A 3d tensor with shape of [N, T, C].
@@ -219,8 +219,9 @@ def ff(inputs, num_units, scope="positionwise_feedforward"):
         outputs = tf.layers.dense(outputs, num_units[1])
 
         # Residual connection
-        outputs += inputs
-        
+        if residual:
+            outputs += inputs
+
         # Normalize
         outputs = ln(outputs)
     

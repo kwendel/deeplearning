@@ -23,6 +23,6 @@ class Encoder:
         enc: encoded image data -> (batch_size,??)
 
         '''
-        enc = ff(xs, num_units=[self.hp.d_ff, self.hp.d_model], scope='vgg-encoder')
+        enc = ff(xs, num_units=[self.hp.d_ff_enc, self.hp.d_model_enc], scope='vgg-encoder', residual=False)
 
         return enc
