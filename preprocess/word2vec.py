@@ -1,8 +1,8 @@
 import numpy as np
 from tqdm import tqdm
 
-w2v_path = "models/pretrained/glove.6B/glove.6B.50d.txt"
-captions_path = 'dataset/Flickr8k/prepro/cleaned_captions.pkl'
+w2v_path = "../models/pretrained/glove.6B/glove.6B.50d.txt"
+captions_path = '../dataset/Flickr8k/prepro/cleaned_captions.pkl'
 
 # Unkown token is the average vector of GLOVE
 # https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
@@ -28,8 +28,10 @@ UNK_VEC = np.concatenate((UNK_VEC, ZERO_COLS))
 # This makes our embedding dimension 50 (glove) + 2 (extra)
 VEC_DIM = 52
 
-# We use np.pad for padding, but pad rows are equal to PAD_VEC
-pad_val = 1.0
+# Also we add the zero_cols to the word2vec embedding
+
+
+# We use np.pad for padding
 PAD_VEC = np.ones((50 + 2), dtype=float)
 
 
@@ -55,7 +57,8 @@ def load_w2v(path):
 
             # Check if what we read makes sense
             if len(vec[1:]) != dims:
-                raise ValueError("GloVe Word2Vec -- wrong dimensions! Expected %s., got %s., for word %s." % (dims, len(vec[1:]), vec[0]))
+                raise ValueError("GloVe Word2Vec -- wrong dimensions! Expected %s., got %s., for word %s." % (
+                    dims, len(vec[1:]), vec[0]))
 
             v = np.array(list(map(float, vec[1:])), dtype=float)
             w2v[vec[0]] = np.concatenate((v, ZERO_COLS))
@@ -88,7 +91,7 @@ def embed_sentence(w2v, sentence, max_length, vec_dim=VEC_DIM):
             break
 
     # Pad until max length
-    embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=1.0)
+    embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=0)
 
     return embedded
 
@@ -111,19 +114,123 @@ def create_embeddings(df_captions, max_length):
     df_captions['word2vec'] = embeddings
     return df_captions
 
-# if __name__ == '__main__':
-# captions = pickle.load(open(captions_path, 'rb'))
-# w2v = load_w2v(w2v_path)
-# # TODO: set this to the maximum amount of words, +2 for start and end token
-# max_length = 32
-#
-# # Regrister tqdm for pandas
-# tqdm.pandas(desc="Word2Vec embedding")
-#
-# # Embed each sentence
-# embed_fn = lambda row: embed_sentence(w2v, row['caption'], max_length).flatten()
-# embeddings = captions.progress_apply(embed_fn, axis=1)
-# # embeddings = df_captions.apply(embed_fn)
-#
-# # Save as a new column and return the df
-# captions['word2vec'] = embeddings
+
+#### Test for doing vec2word
+
+def method1():
+    """ Method 1
+    Load a gensim model based on GloVe
+    This is not really effective, as this model does not contain our extra tokens
+    Thus we need to for these tokens, or otherwise only use 50 dimensions
+    :return:
+    """
+    # Load embeddings
+    import pickle
+    captions = pickle.load(open(captions_path, 'rb'))
+    if 'word2vec' in captions.columns:
+        print("Contains word2Vec")
+
+    from gensim.models import KeyedVectors
+    from gensim.scripts.glove2word2vec import glove2word2vec
+
+    # Load gensim model
+    glove_file = w2v_path
+    tmp_file = "../dataset/Flickr8k/prepro/gensim_word2vec.txt"
+    _ = glove2word2vec(glove_file, tmp_file)
+    model = KeyedVectors.load_word2vec_format(tmp_file)
+
+    def __to_sentence(matrix):
+        def __vec2word(v):
+            # Returns list((str,float))
+            w = model.wv.similar_by_vector(v[0:50], topn=1)
+
+            # Topn was 1 so select this word
+            (w, score) = w[0]
+
+            return w, score
+
+        words = np.apply_along_axis(__vec2word, 1, matrix)
+        return words
+
+    for i, row in captions.iterrows():
+        vec = row['word2vec'].reshape((34, 52))
+        original = row['caption']
+        decoded = __to_sentence(vec)
+
+        print(original)
+        print(decoded)
+
+        break
+
+
+if __name__ == '__main__':
+    # Method 2
+    # Manually add each entry of w2v to the gensim model
+    # Maybe save this model??
+
+    # Load gensim
+    from gensim.models import KeyedVectors
+
+    # Load the w2v entities en vectors
+    w2v = load_w2v(w2v_path)
+    entities = list(w2v.keys())
+    vectors = list(w2v.values())
+
+    # Add our special tokens to the sets
+    entities.append("<START>")
+    vectors.append(START_VEC)
+    entities.append("<END>")
+    vectors.append(END_VEC)
+    entities.append("<PAD>")
+    vectors.append(PAD_VEC)
+
+    # Create the gensim model
+    model = KeyedVectors(vector_size=VEC_DIM)
+    model.add(entities, vectors)
+
+
+    def __to_sentence(wv, matrix):
+        def __vec2word(v):
+            # Returns list((str,float))
+            w = wv.similar_by_vector(v, topn=1)
+
+            # Topn was 1 so select this word
+            (w, score) = w[0]
+
+            return w, score
+
+        words = np.apply_along_axis(__vec2word, 1, matrix)
+        return words
+
+
+    # Test on a caption
+    import pickle
+
+    captions = pickle.load(open(captions_path, "rb"))
+    # for i, row in captions.iterrows():
+    #     vec = row['word2vec'].reshape((34, 52))
+    #     original = row['caption']
+    #     decoded = __to_sentence(model.wv, vec)
+    #     print(original)
+    #     print(decoded)
+    #     break
+
+    # Now save the model
+    gensim_model = "../dataset/Flickr8k/prepro/gensim_model.npy"
+    model.save(open(gensim_model, mode='wb+'))
+
+    # Load and test again
+    m2 = KeyedVectors(vector_size=VEC_DIM).load(gensim_model)
+    for i, row in captions.iterrows():
+        vec = row['word2vec'].reshape((34, 52))
+        original = row['caption']
+        decoded = __to_sentence(m2.wv, vec)
+
+        sent = " ".join([w if w != "<PAD>" else "" for (w, s) in decoded])
+        print(original)
+        print(decoded)
+        break
+
+    # conclusion -- this method is superior if we computed the gensim model once and save it
+    # TODO: refactor to compute this in prepro.py
+
