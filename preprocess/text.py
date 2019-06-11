@@ -115,20 +115,20 @@ def clean_captions(df_txt):
 
 def train_sp(in_path, out_path, vocab_size):
     # model_prefix = "trained_sp"
-    spm.SentencePieceTrainer.Train(f'--input={in_path} '
-                                   f'--model_prefix={out_path} '
-                                   f'--vocab_size={vocab_size} '
-                                   f'--bos_id=0 '
-                                   f'--unk_id=1 '
-                                   f'--pad_id=2 '
-                                   f'--eos_id=3 ')
+    spm.SentencePieceTrainer.Train('--input=%s.' % in_path,
+                                   '--model_prefix=%s.' % out_path,
+                                   '--vocab_size=%s.' % vocab_size,
+                                   '--bos_id=0 ',
+                                   '--unk_id=1 ',
+                                   '--pad_id=2 ',
+                                   '--eos_id=3 ')
     return
 
 
 def load_sp(in_path):
     # Load trained model
     sp = spm.SentencePieceProcessor()
-    sp.Load(f'{in_path}')
+    sp.Load('%s.'% in_path)
 
     return sp
 

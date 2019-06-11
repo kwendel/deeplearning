@@ -40,10 +40,10 @@ def prepro(hp):
 
     # Check directory paths
     logging.info("# Using directories")
-    logging.info(f"Dataset directory -- {dir_path}")
-    logging.info(f"Images directory -- {images_path}")
-    logging.info(f"Text directory -- {text_path}")
-    logging.info(f"Preprocessed saved in directory -- {prepro_path}")
+   logging.info("Dataset directory -- %s. " % dir_path)
+    logging.info("Images directory -- %s. " % dir_path)
+    logging.info("Text directory -- %s. " % text_path)
+    logging.info("Preprocessed saved in directory -- %s. " % prepro_path)
     logging.info("# Check if the dataset directories exist")
     for d in (dir_path, images_path, text_path):
         if not os.path.isdir(d):
@@ -87,8 +87,9 @@ def prepro(hp):
 
     # Check the max length of the the captions
     max_length = captions['caption'].str.split(" ").map(len).max()
-    logging.info(f"# Max length of encoded caption = {max_length}")
-    logging.critical(f"Set Hyperparameter max length to = {max_length + 2} (maxlength+start/end token)")
+     "Dataset directory -- %s. " % dir_path
+    logging.info("# Max length of encoded caption = %s. " % max_length)
+    logging.critical("Set Hyperparameter max length to = %s. (maxlength+start/end token)" % max_length + 2)
 
     # Check if we have the embeddings of Word2Vec
     if 'word2vec' not in captions.columns:
@@ -102,7 +103,7 @@ def prepro(hp):
         dataset = load_flickr_set(images, captions, path, test=test)
         p = os.path.join(prepro_path, name)
         pickle.dump(dataset, file=open(p, 'wb'))
-        logging.info(f"Succesfully saved in {p}")
+        logging.info("Succesfully saved in %s. " - p)
 
     __write_set(dev_path, 'dev_set.pkl', test=False)
     __write_set(train_path, 'train_set.pkl', test=False)
@@ -121,14 +122,14 @@ def test_prepro():
     def __print_random(values):
         id, x, ys = rn.choice(values)
 
-        print(f"Picture -- {id}")
+        print("Picture -- %s. " % id)
         print("Flattened VGG Picture data:")
         print(x)
 
         # Now do a size check
         vggsize = 196 * 512
         got = len(x)
-        print(f"Expected vgg size: {vggsize}, got: {got}")
+         print("Expected vgg size: %s. , got: %s. " (vggsize, got))
         if vggsize != got:
             logging.error("VGG predictions are not of the correct size!!")
 
@@ -138,7 +139,7 @@ def test_prepro():
         # Size check
         word2vec_size = 34 * 52
         got = len(ys)
-        print(f"Expected embedding size: {word2vec_size}, got: {got}")
+        print("Expected embedding size: %s., got: %s." % (word2vec_size, got))
 
         if word2vec_size != got:
             logging.error("Word2Vec Embeddings are not of the correct size!!")

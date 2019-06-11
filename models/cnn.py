@@ -10,7 +10,7 @@ PRETRAINED_VGG16 = 'pretrained/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 
 
 class CNN:
-    def __init__(self, hp: Hparams):
+    def __init__(self, hp):
         self.hp = hp
 
         # TODO: why is the Dense output size (*,1000)?

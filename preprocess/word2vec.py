@@ -36,7 +36,7 @@ VEC_DIM = 52
 # PAD_VEC = np.zeros((1, 50 + 2))
 
 
-def compute_average(w2v: dict, vec_dim=VEC_DIM):
+def compute_average(w2v, vec_dim=VEC_DIM):
     vecs = np.zeros((len(w2v), vec_dim), dtype=np.float32)
 
     i = 0
@@ -58,7 +58,7 @@ def load_w2v(path):
 
             # Check if what we read makes sense
             if len(vec[1:]) != dims:
-                raise ValueError(f"GloVe Word2Vec -- wrong dimensions! Expected {dims}, got {len(vec[1:])} for word {vec[0]}")
+                raise ValueError("GloVe Word2Vec -- wrong dimensions! Expected %s., got %s., for word %s." % (dims, len(vec[1:]), vec[0]))
 
             v = np.array(list(map(float, vec[1:])), dtype=float)
             w2v[vec[0]] = np.concatenate((v, ZERO_COLS))
@@ -88,7 +88,7 @@ def embed_sentence(w2v, sentence, max_length, vec_dim=VEC_DIM):
             embedded[i + 1, :] = v
         else:
             print(v)
-            breakpoint()
+            break
 
     # Pad until max length
     embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=0)

@@ -11,9 +11,9 @@ class Hparams:
     # train
     ## files
     default_dir = 'dataset/Flickr8k/prepro'
-    parser.add_argument('--train', default=f'{default_dir}/train_set.pkl')
-    parser.add_argument('--dev', default=f'{default_dir}/dev_set.pkl')
-    parser.add_argument('--test', default=f'{default_dir}/train_set.pkl')
+    parser.add_argument('--train', default='%s./train_set.pkl' % default_dir)
+    parser.add_argument('--dev', default='%s./dev_set.pkl' % default_dir)
+    parser.add_argument('--test', default='%s./train_set.pkl' % default_dir)
 
 
     # training scheme
