@@ -55,7 +55,7 @@ class EncoderDecoder:
         '''
 
         # Initialize batch (N, 1, 52) with only first row with the start token
-        y_start = tf.ones((tf.shape(xs)[0], 1, 52), tf.float32) * self.embedding['start']
+        y_start = tf.ones((tf.shape(xs)[0], 1, self.hp.embed_size), tf.float32) * self.embedding['start']
         y_in = y_start
 
         # Use Encoder to generate memory of the picture

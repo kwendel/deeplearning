@@ -1,5 +1,6 @@
 import os
 import pickle
+import random
 
 import tensorflow as tf
 
@@ -23,7 +24,7 @@ from utils.utils import calc_num_batches
 #     return token2idx, idx2token
 
 
-def load_data(fpath):
+def load_data(fpath, data_size):
     ''' Loads the preprocessed data pickle.
     This assumes the following:
     - image data is preprocessed with a VGGNet to (196,512) and this array is flattened with numpy C-order (default)
@@ -34,6 +35,13 @@ def load_data(fpath):
     '''
 
     data = pickle.load(open(fpath, 'rb'))
+
+    if data_size < 1.0:
+        # Randomly pick data_size percentage of the dataset
+        keys = list(data.keys())
+        pick = random.sample(keys, int(data_size * len(keys)))
+        data = [data[k] for k in pick]
+
     return data
 
 
@@ -55,7 +63,7 @@ def load_data(fpath):
 #     x = [dict.get(t, dict["<unk>"]) for t in tokens]
 #     return x
 
-def generator_fn(fpath):
+def generator_fn(fpath, data_size, vgg_shape, embed_shape):
     '''Generates training / evaluation data
     sents1: list of source sents
     sents2: list of target sents
@@ -70,14 +78,14 @@ def generator_fn(fpath):
         y: list of token id of the caption (,max_length)
 
     '''
-    image_caption_dict = load_data(fpath)
+    image_caption_dict = load_data(fpath, data_size)
 
     for value in image_caption_dict.values():
         uid, img, caption = value
-        yield uid, img.reshape(196, 512), caption.reshape(34, 52)
+        yield uid, img.reshape(vgg_shape), caption.reshape(embed_shape)
 
 
-def input_fn(fpath, batch_size, shuffle):
+def input_fn(fpath, batch_size, data_size, vgg_shape, embed_shape, shuffle):
     '''Batchify data
     image_caption_dict: dict of image_id -> (image_id, img_data, encoded caption)
     batch_size: scalar
@@ -92,7 +100,7 @@ def input_fn(fpath, batch_size, shuffle):
         y: list of token id of the caption (,max_length) -- (N,max_length)
     '''
     shapes = (
-        (), (196, 512), (34, 52)
+        (), vgg_shape, embed_shape
     )
     types = (
         tf.string, tf.float32, tf.float32
@@ -102,7 +110,8 @@ def input_fn(fpath, batch_size, shuffle):
         generator_fn,
         output_shapes=shapes,
         output_types=types,
-        args=([fpath])  # <- arguments for generator_fn. converted to np string arrays
+        args=([fpath, data_size, vgg_shape, embed_shape])
+        # <- arguments for generator_fn. converted to np string arrays
     )
 
     if shuffle:  # for training
@@ -114,7 +123,7 @@ def input_fn(fpath, batch_size, shuffle):
     return dataset
 
 
-def get_batch(fpath, batch_size, shuffle=False):
+def get_batch(fpath, batch_size, data_size=1.0, vgg_shape=(196, 512), embed_shape=(34, 52), shuffle=False):
     '''Gets training / evaluation mini-batches
     fpath: path to pickle of dataset
     batch_size: scalar
@@ -125,8 +134,8 @@ def get_batch(fpath, batch_size, shuffle=False):
     num_batches: number of mini-batches
     num_samples
     '''
-    images_caption_dict = load_data(fpath)
-    batches = input_fn(fpath, batch_size, shuffle=shuffle)
+    images_caption_dict = load_data(fpath, data_size)
+    batches = input_fn(fpath, batch_size, data_size, vgg_shape, embed_shape, shuffle)
     num_batches = calc_num_batches(len(images_caption_dict), batch_size)
     return batches, num_batches, len(images_caption_dict)
 
@@ -145,17 +154,19 @@ if __name__ == '__main__':
     # Create batches
     train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, shuffle=False)
 
+    t, num, train = get_batch(hp.dev, 128, data_size=0.1)
+
     # Try to mimick the train.py script with eager execution()
     # create a iterator of the correct shape and type
-    iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
-    train_init_op = iter.make_initializer(train_batches)
+    # iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
+    # train_init_op = iter.make_initializer(train_batches)
 
-    id, xs, ys = iter.get_next()
+    # id, xs, ys = iter.get_next()
 
     # Model things
-    print("Loading model")
+    # print("Loading model")
 
-    m = EncoderDecoder(hp)
+    # m = EncoderDecoder(hp)
 
     # loss, train_op, global_step, train_summaries = m.train(xs, ys)
-    y_hat, summaries = m.eval(id, xs, ys)
+    # y_hat, summaries = m.eval(id, xs, ys)
