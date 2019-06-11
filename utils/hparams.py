@@ -5,24 +5,16 @@ class Hparams:
     parser = argparse.ArgumentParser()
 
     # prepro
-    parser.add_argument('--vocab_size', default=32000, type=int)
+    # parser.add_argument('--vocab_size', default=32000, type=int)
+    parser.add_argument('--vocab_size', default=2048, type=int)
 
     # train
     ## files
-    parser.add_argument('--train1', default='iwslt2016/segmented/train.de.bpe',
-                        help="german training segmented data")
-    parser.add_argument('--train2', default='iwslt2016/segmented/train.en.bpe',
-                        help="english training segmented data")
-    parser.add_argument('--eval1', default='iwslt2016/segmented/eval.de.bpe',
-                        help="german evaluation segmented data")
-    parser.add_argument('--eval2', default='iwslt2016/segmented/eval.en.bpe',
-                        help="english evaluation segmented data")
-    parser.add_argument('--eval3', default='iwslt2016/prepro/eval.en',
-                        help="english evaluation unsegmented data")
+    default_dir = 'dataset/Flickr8k/prepro'
+    parser.add_argument('--train', default='%s./train_set.pkl' % default_dir)
+    parser.add_argument('--dev', default='%s./dev_set.pkl' % default_dir)
+    parser.add_argument('--test', default='%s./train_set.pkl' % default_dir)
 
-    ## vocabulary
-    parser.add_argument('--vocab', default='iwslt2016/segmented/bpe.vocab',
-                        help="vocabulary file path")
 
     # training scheme
     parser.add_argument('--batch_size', default=128, type=int)

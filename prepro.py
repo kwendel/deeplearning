@@ -1,112 +1,179 @@
 # -*- coding: utf-8 -*-
-#/usr/bin/python3
+# /usr/bin/python3
 '''
-Feb. 2019 by kyubyong park.
-kbpark.linguist@gmail.com.
-https://www.github.com/kyubyong/transformer.
+May 2019 by Kasper Wendel
 
-Preprocess the iwslt 2016 datasets.
+Preprocess the Flickr8k dataset
+Images -> VGG intermediate predictions
+captions -> encoded with Tokenizer SentencePiece as indices
 '''
 
-import os
 import errno
-import sentencepiece as spm
-import re
-from utils.hparams import Hparams
 import logging
+import os
+import pickle
+import random as rn
+
+import pandas as pd
+from numpy.random import seed
+from tensorflow import set_random_seed
+
+from preprocess.dataset import load_flickr_set
+from preprocess.image import files_to_prediction
+from preprocess.text import read_captions, clean_captions
+from preprocess.word2vec import create_embeddings
+from utils.hparams import Hparams
 
 logging.basicConfig(level=logging.INFO)
+
+
+def setseed(sd=42):
+    seed(sd)
+    set_random_seed(sd)
+    rn.seed(sd)
+
 
 def prepro(hp):
     """Load raw data -> Preprocessing -> Segmenting with sentencepice
     hp: hyperparams. argparse.
     """
-    logging.info("# Check if raw files exist")
-    train1 = "iwslt2016/de-en/train.tags.de-en.de"
-    train2 = "iwslt2016/de-en/train.tags.de-en.en"
-    eval1 = "iwslt2016/de-en/IWSLT16.TED.tst2013.de-en.de.xml"
-    eval2 = "iwslt2016/de-en/IWSLT16.TED.tst2013.de-en.en.xml"
-    test1 = "iwslt2016/de-en/IWSLT16.TED.tst2014.de-en.de.xml"
-    test2 = "iwslt2016/de-en/IWSLT16.TED.tst2014.de-en.en.xml"
-    for f in (train1, train2, eval1, eval2, test1, test2):
-        if not os.path.isfile(f):
+
+    # Check directory paths
+    logging.info("# Using directories")
+    logging.info("Dataset directory -- %s. " % dir_path)
+    logging.info("Images directory -- %s. " % dir_path)
+    logging.info("Text directory -- %s. " % text_path)
+    logging.info("Preprocessed saved in directory -- %s. " % prepro_path)
+    logging.info("# Check if the dataset directories exist")
+    for d in (dir_path, images_path, text_path):
+        if not os.path.isdir(d):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), d)
+
+    # Create directory for saving preprocessed data
+    logging.info("# Create directory for preprocessed data")
+    os.makedirs(prepro_path, exist_ok=True)
+
+    # Check dataset splits files exist
+    logging.info("# Check if dataset files are existing")
+    dev_path = os.path.join(text_path, 'Flickr_8k.devImages.txt')
+    train_path = os.path.join(text_path, 'Flickr_8k.trainImages.txt')
+    test_path = os.path.join(text_path, 'Flickr_8k.testImages.txt')
+    for f in (dev_path, train_path, test_path):
+        if not os.path.exists(f):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f)
 
-    logging.info("# Preprocessing")
-    # train
-    _prepro = lambda x:  [line.strip() for line in open(x, 'r', encoding='utf-8').read().split("\n") \
-                      if not line.startswith("<")]
-    prepro_train1, prepro_train2 = _prepro(train1), _prepro(train2)
-    assert len(prepro_train1)==len(prepro_train2), "Check if train source and target files match."
+    # Preprocess images -- make (196, 512) prediction per image with VGG
+    logging.info("# Preprocessing images")
+    images_pickle = os.path.join(prepro_path, "images.pkl")
+    if os.path.exists(images_pickle):
+        logging.info("# Loading images pickle from -- {}".format(images_pickle))
+        images = pickle.load(open(images_pickle, 'rb'))
+    else:
+        images = files_to_prediction(images_path)
+        logging.info("# Image pickle saved in -- {}".format(images_pickle))
+        pickle.dump(images, file=open(images_pickle, "wb"))
 
-    # eval
-    _prepro = lambda x: [re.sub("<[^>]+>", "", line).strip() \
-                     for line in open(x, 'r', encoding='utf-8').read().split("\n") \
-                     if line.startswith("<seg id")]
-    prepro_eval1, prepro_eval2 = _prepro(eval1), _prepro(eval2)
-    assert len(prepro_eval1) == len(prepro_eval2), "Check if eval source and target files match."
+    # Preprocess captions -- clean captions (remove punct, single chars and numbers)
+    logging.info("# Preprocessing captions")
+    caption_pickle = os.path.join(prepro_path, "cleaned_captions.pkl")
+    if os.path.exists(caption_pickle):
+        logging.info("# Loading caption pickle from -- {}".format(caption_pickle))
+        captions = pd.read_pickle(caption_pickle)
+    else:
+        captions = read_captions(os.path.join(text_path, 'Flickr8k.lemma.token.txt'))
+        captions = clean_captions(captions)
+        logging.info("# Caption pickle saved in -- {}".format(caption_pickle))
+        captions.to_pickle(path=caption_pickle)
 
-    # test
-    prepro_test1, prepro_test2 = _prepro(test1), _prepro(test2)
-    assert len(prepro_test1) == len(prepro_test2), "Check if test source and target files match."
+    # Check the max length of the the captions
+    max_length = captions['caption'].str.split(" ").map(len).max()
+    logging.info("# Max length of encoded caption = %s. " % max_length)
+    logging.critical("Set Hyperparameter max length to = %s. (maxlength+start/end token)" % max_length + 2)
 
-    logging.info("Let's see how preprocessed data look like")
-    logging.info("prepro_train1:", prepro_train1[0])
-    logging.info("prepro_train2:", prepro_train2[0])
-    logging.info("prepro_eval1:", prepro_eval1[0])
-    logging.info("prepro_eval2:", prepro_eval2[0])
-    logging.info("prepro_test1:", prepro_test1[0])
-    logging.info("prepro_test2:", prepro_test2[0])
+    # Check if we have the embeddings of Word2Vec
+    if 'word2vec' not in captions.columns:
+        captions = create_embeddings(captions, max_length)
+        captions.to_pickle(path=caption_pickle)
 
-    logging.info("# write preprocessed files to disk")
-    os.makedirs("iwslt2016/prepro", exist_ok=True)
-    def _write(sents, fname):
-        with open(fname, 'w', encoding='utf-8') as fout:
-            fout.write("\n".join(sents))
+    # Create the predefined splits with our preprocessed data
+    logging.info("# Making data splits with encoded and padded captions")
 
-    _write(prepro_train1, "iwslt2016/prepro/train.de")
-    _write(prepro_train2, "iwslt2016/prepro/train.en")
-    _write(prepro_train1+prepro_train2, "iwslt2016/prepro/train")
-    _write(prepro_eval1, "iwslt2016/prepro/eval.de")
-    _write(prepro_eval2, "iwslt2016/prepro/eval.en")
-    _write(prepro_test1, "iwslt2016/prepro/test.de")
-    _write(prepro_test2, "iwslt2016/prepro/test.en")
+    def __write_set(path, name, test):
+        dataset = load_flickr_set(images, captions, path, test=test)
+        p = os.path.join(prepro_path, name)
+        pickle.dump(dataset, file=open(p, 'wb'))
+        logging.info("Succesfully saved in %s. " % p)
 
-    logging.info("# Train a joint BPE model with sentencepiece")
-    os.makedirs("iwslt2016/segmented", exist_ok=True)
-    train = '--input=iwslt2016/prepro/train --pad_id=0 --unk_id=1 \
-             --bos_id=2 --eos_id=3\
-             --model_prefix=iwslt2016/segmented/bpe --vocab_size={} \
-             --model_type=bpe'.format(hp.vocab_size)
-    spm.SentencePieceTrainer.Train(train)
+    __write_set(dev_path, 'dev_set.pkl', test=False)
+    __write_set(train_path, 'train_set.pkl', test=False)
+    __write_set(test_path, 'test_set.pkl', test=False)
 
-    logging.info("# Load trained bpe model")
-    sp = spm.SentencePieceProcessor()
-    sp.Load("iwslt2016/segmented/bpe.model")
 
-    logging.info("# Segment")
-    def _segment_and_write(sents, fname):
-        with open(fname, "w", encoding='utf-8') as fout:
-            for sent in sents:
-                pieces = sp.EncodeAsPieces(sent)
-                fout.write(" ".join(pieces) + "\n")
+def test_prepro():
+    logging.info("Test if the pickles can be decoded correctly")
+    dev_path = os.path.join(prepro_path, 'dev_set.pkl')
+    train_path = os.path.join(prepro_path, 'train_set.pkl')
+    test_path = os.path.join(prepro_path, 'test_set.pkl')
+    dev = pickle.load(open(dev_path, 'rb'))
+    trn = pickle.load(open(train_path, 'rb'))
+    tst = pickle.load(open(test_path, 'rb'))
 
-    _segment_and_write(prepro_train1, "iwslt2016/segmented/train.de.bpe")
-    _segment_and_write(prepro_train2, "iwslt2016/segmented/train.en.bpe")
-    _segment_and_write(prepro_eval1, "iwslt2016/segmented/eval.de.bpe")
-    _segment_and_write(prepro_eval2, "iwslt2016/segmented/eval.en.bpe")
-    _segment_and_write(prepro_test1, "iwslt2016/segmented/test.de.bpe")
+    def __print_random(values):
+        id, x, ys = rn.choice(values)
 
-    logging.info("Let's see how segmented data look like")
-    print("train1:", open("iwslt2016/segmented/train.de.bpe",'r', encoding='utf-8').readline())
-    print("train2:", open("iwslt2016/segmented/train.en.bpe", 'r', encoding='utf-8').readline())
-    print("eval1:", open("iwslt2016/segmented/eval.de.bpe", 'r', encoding='utf-8').readline())
-    print("eval2:", open("iwslt2016/segmented/eval.en.bpe", 'r', encoding='utf-8').readline())
-    print("test1:", open("iwslt2016/segmented/test.de.bpe", 'r', encoding='utf-8').readline())
+        print("Picture -- %s. " % id)
+        print("Flattened VGG Picture data:")
+        print(x)
+
+        # Now do a size check
+        vggsize = 196 * 512
+        got = len(x)
+        print("Expected vgg size: %s. , got: %s. " (vggsize, got))
+        if vggsize != got:
+            logging.error("VGG predictions are not of the correct size!!")
+
+        print("Flattened Embedded captions:")
+        print(ys)
+
+        # Size check
+        word2vec_size = 34 * 52
+        got = len(ys)
+        print("Expected embedding size: %s., got: %s." % (word2vec_size, got))
+
+        if word2vec_size != got:
+            logging.error("Word2Vec Embeddings are not of the correct size!!")
+
+        # if type(ys) is tuple:
+        #     # Multiple labels
+        #     captions = [sp.DecodeIds(y.tolist()) for y in ys]
+        #     print(captions)
+        # else:
+        #     print(sp.DecodeIds(ys.tolist()))
+
+    print("Dev set")
+    __print_random(list(dev.values()))
+    print("Train set")
+    __print_random(list(trn.values()))
+    print("Test set")
+    __print_random(list(tst.values()))
+
 
 if __name__ == '__main__':
+    # Parse cmdline arguments
     hparams = Hparams()
     parser = hparams.parser
     hp = parser.parse_args()
+
+    # Define directory paths
+    dir_path = os.path.join(os.getcwd(), "dataset", "Flickr8k")
+    images_path = os.path.join(dir_path, "Flickr8k_Dataset", "Flicker8k_Dataset")
+    text_path = os.path.join(dir_path, "Flickr8k_text")
+    prepro_path = os.path.join(dir_path, "prepro")
+
+    # Preprocess the data
+    setseed()
     prepro(hp)
+
+    # Test the preprocessed files
+    test_prepro()
     logging.info("Done")

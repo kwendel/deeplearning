@@ -105,6 +105,7 @@ venv.bak/
 
 # ignore Intelij config
 .idea
+deeplearning.iml
 
 # ignore data
 eval/
@@ -112,7 +113,8 @@ log/
 fig/
 test/
 iwslt2016/
-eval/
-fig/
-log/
-test/
+
+# Ignore datsets
+/dataset/*
+
+/models/pretrained/*

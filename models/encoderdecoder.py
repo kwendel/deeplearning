@@ -20,6 +20,9 @@ class EncoderDecoder:
 
         # TODO:
         self.token2idx, self.idx2token = load_vocab(hp.vocab)
+        # Load vocab
+        # Load token2idx etc.
+
 
     def train(self, xs, ys):
         memory, info = self.encoder.encode(xs)
