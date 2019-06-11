@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from encoder import Encoder
 from preprocess.word2vec import START_VEC, END_VEC, UNK_VEC, PAD_VEC
-from transformer_modified import Transformer
+from transformer import Transformer
 from utils.modules import noam_scheme
 
 logging.basicConfig(level=logging.INFO)

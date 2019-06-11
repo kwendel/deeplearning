@@ -3,9 +3,10 @@ import pickle
 
 import tensorflow as tf
 
-from utils.utils import calc_num_batches
-from models.encoderdecoder_modified import EncoderDecoder
+from models.encoderdecoder import EncoderDecoder
 from utils.hparams import Hparams
+from utils.utils import calc_num_batches
+
 
 # def load_vocab(vocab_fpath):
 #     '''Loads vocabulary file and returns idx<->token maps
@@ -144,7 +145,6 @@ if __name__ == '__main__':
     # Create batches
     train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, shuffle=False)
 
-
     # Try to mimick the train.py script with eager execution()
     # create a iterator of the correct shape and type
     iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
@@ -157,5 +157,5 @@ if __name__ == '__main__':
 
     m = EncoderDecoder(hp)
 
-    loss, train_op, global_step, train_summaries = m.train(xs, ys)
-
+    # loss, train_op, global_step, train_summaries = m.train(xs, ys)
+    y_hat, summaries = m.eval(id, xs, ys)
