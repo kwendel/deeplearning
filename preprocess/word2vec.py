@@ -21,8 +21,8 @@ UNK_VEC = np.array([-0.12920076, -0.28866628, -0.01224866, -0.05676644, -0.20210
 # For the start/end token, we add two new columns to the embedding and make these tokens 1 in one column
 # This gives unique tokens that are not close to other vectors
 ZERO_COLS = np.array([0.0, 0.0], dtype=float)
-START_VEC = np.concatenate((np.zeros(50, dtype=float), np.array([1.0, 0.0])))
-END_VEC = np.concatenate((np.zeros(50, dtype=float), np.array([0.0, 1.0])))
+START_VEC = np.concatenate((np.ones(50, dtype=float), np.array([1.0, 0.0])))
+END_VEC = np.concatenate((np.ones(50, dtype=float), np.array([0.0, 1.0])))
 UNK_VEC = np.concatenate((UNK_VEC, ZERO_COLS))
 
 # This makes our embedding dimension 50 (glove) + 2 (extra)
@@ -91,7 +91,7 @@ def embed_sentence(w2v, sentence, max_length, vec_dim=VEC_DIM):
             break
 
     # Pad until max length
-    embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=0)
+    embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=1.0)
 
     return embedded
 
