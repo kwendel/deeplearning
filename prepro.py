@@ -40,7 +40,7 @@ def prepro(hp):
 
     # Check directory paths
     logging.info("# Using directories")
-   logging.info("Dataset directory -- %s. " % dir_path)
+    logging.info("Dataset directory -- %s. " % dir_path)
     logging.info("Images directory -- %s. " % dir_path)
     logging.info("Text directory -- %s. " % text_path)
     logging.info("Preprocessed saved in directory -- %s. " % prepro_path)
@@ -87,7 +87,6 @@ def prepro(hp):
 
     # Check the max length of the the captions
     max_length = captions['caption'].str.split(" ").map(len).max()
-     "Dataset directory -- %s. " % dir_path
     logging.info("# Max length of encoded caption = %s. " % max_length)
     logging.critical("Set Hyperparameter max length to = %s. (maxlength+start/end token)" % max_length + 2)
 
@@ -103,7 +102,7 @@ def prepro(hp):
         dataset = load_flickr_set(images, captions, path, test=test)
         p = os.path.join(prepro_path, name)
         pickle.dump(dataset, file=open(p, 'wb'))
-        logging.info("Succesfully saved in %s. " - p)
+        logging.info("Succesfully saved in %s. " % p)
 
     __write_set(dev_path, 'dev_set.pkl', test=False)
     __write_set(train_path, 'train_set.pkl', test=False)
@@ -129,7 +128,7 @@ def test_prepro():
         # Now do a size check
         vggsize = 196 * 512
         got = len(x)
-         print("Expected vgg size: %s. , got: %s. " (vggsize, got))
+        print("Expected vgg size: %s. , got: %s. " (vggsize, got))
         if vggsize != got:
             logging.error("VGG predictions are not of the correct size!!")
 
