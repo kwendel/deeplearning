@@ -27,7 +27,7 @@ def load_data(fpath, data_size):
         # Randomly pick data_size percentage of the dataset
         keys = list(data.keys())
         pick = random.sample(keys, int(data_size * len(keys)))
-        data = [data[k] for k in pick]
+        data = {k: data[k] for k in pick}
 
     return data
 
