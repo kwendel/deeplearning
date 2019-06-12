@@ -81,7 +81,7 @@ def prepro(hp):
         captions = pd.read_pickle(caption_pickle)
     else:
         captions = read_captions(os.path.join(text_path, 'Flickr8k.lemma.token.txt'))
-        captions = clean_captions(captions)
+        captions['caption'] = clean_captions(captions['caption'])
         logging.info("# Caption pickle saved in -- {}".format(caption_pickle))
         captions.to_pickle(path=caption_pickle)
 
