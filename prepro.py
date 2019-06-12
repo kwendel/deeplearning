@@ -21,7 +21,8 @@ from tensorflow import set_random_seed
 from preprocess.dataset import load_flickr_set
 from preprocess.image import files_to_prediction
 from preprocess.text import read_captions, clean_captions
-from preprocess.word2vec import create_embeddings
+from preprocess.word2vec import Word2Vector
+from preprocess.vec2word import Vec2Word
 from utils.hparams import Hparams
 
 logging.basicConfig(level=logging.INFO)
@@ -87,12 +88,33 @@ def prepro(hp):
 
     # Check the max length of the the captions
     max_length = captions['caption'].str.split(" ").map(len).max()
-    logging.info("# Max length of encoded caption = %s. " % max_length)
-    logging.critical("Set Hyperparameter max length to = %s. (maxlength+start/end token)" % max_length + 2)
+    logging.info("# Max #words in the captions = %s. " % max_length)
+    # Add two for the start and end token
+    max_length = max_length + 2
+    logging.critical("Set Hyperparameter max length to = %s. (maxlength+start/end token)" % str(max_length))
 
     # Check if we have the embeddings of Word2Vec
     if 'word2vec' not in captions.columns:
-        captions = create_embeddings(captions, max_length)
+        # TODO: make these below hyperparameters for easier embedding switching
+        w2v_path = os.path.join(pretrained_path, "glove.6B", "glove.6B.50d.txt")
+        vec_dim = 50
+        embedding_dim = vec_dim + 2
+
+        # Check if the pretrained GloVe files are available
+        if not os.path.exists(w2v_path):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), w2v_path)
+
+        # Create embeddings
+        w2v = Word2Vector(w2v_path, vec_dim)
+        captions['word2vec'] = w2v.create_embeddings(captions['caption'], max_length)
+
+        # Create two files that give information about the embedding
+        w2v.analysis(prepro_path)
+
+        # Create gensim model for vec2word
+        Vec2Word.create_and_save(w2v.w2v, w2v.tokens, embedding_dim, os.path.join(prepro_path, "vec2word_model.npy"))
+
+        # Save the embeddings
         captions.to_pickle(path=caption_pickle)
 
     # Create the predefined splits with our preprocessed data
@@ -118,6 +140,7 @@ def test_prepro():
     trn = pickle.load(open(train_path, 'rb'))
     tst = pickle.load(open(test_path, 'rb'))
 
+    vec2word = Vec2Word(os.path.join(prepro_path, "vec2word_model.npy"))
     def __print_random(values):
         id, x, ys = rn.choice(values)
 
@@ -128,7 +151,7 @@ def test_prepro():
         # Now do a size check
         vggsize = 196 * 512
         got = len(x)
-        print("Expected vgg size: %s. , got: %s. " (vggsize, got))
+        print("Expected vgg size: %s. , got: %s. " % (vggsize, got))
         if vggsize != got:
             logging.error("VGG predictions are not of the correct size!!")
 
@@ -143,12 +166,11 @@ def test_prepro():
         if word2vec_size != got:
             logging.error("Word2Vec Embeddings are not of the correct size!!")
 
-        # if type(ys) is tuple:
-        #     # Multiple labels
-        #     captions = [sp.DecodeIds(y.tolist()) for y in ys]
-        #     print(captions)
-        # else:
-        #     print(sp.DecodeIds(ys.tolist()))
+        scores, sent = vec2word.matrix2sent(ys.reshape(34, 52))
+        print("Decoded sentence:")
+        print(sent)
+        print("Similarity scores: ")
+        print(scores)
 
     print("Dev set")
     __print_random(list(dev.values()))
@@ -169,6 +191,7 @@ if __name__ == '__main__':
     images_path = os.path.join(dir_path, "Flickr8k_Dataset", "Flicker8k_Dataset")
     text_path = os.path.join(dir_path, "Flickr8k_text")
     prepro_path = os.path.join(dir_path, "prepro")
+    pretrained_path = os.path.join(os.getcwd(), "models", "pretrained")
 
     # Preprocess the data
     setseed()
