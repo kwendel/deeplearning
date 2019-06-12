@@ -1,10 +1,20 @@
 import numpy as np
 from gensim.models import KeyedVectors
 
+from .word2vec import PAD_TOKEN
+
 
 class Vec2Word:
-    def __init__(self, path, dimension=52):
-        self.model = KeyedVectors(vector_size=dimension).load(path)
+    def __init__(self, model):
+        self.model = model
+
+    @classmethod
+    def load_model(cls, path, dimension):
+        return cls(KeyedVectors(vector_size=dimension).load(path))
+
+    @classmethod
+    def create_with(cls, model):
+        return cls(model)
 
     def vec2word(self, vec, topn):
         # Returns list with topn tuples of (word,similarity_score)
@@ -22,7 +32,7 @@ class Vec2Word:
         decoded = np.apply_along_axis(getter, 1, matrix)
 
         # Join all the non pad tokens
-        sent = " ".join([w if w != "PAD" else "" for (w, s) in decoded])
+        sent = " ".join([w if w != PAD_TOKEN else "" for (w, s) in decoded])
 
         return decoded, sent
 
@@ -42,4 +52,4 @@ class Vec2Word:
         with open(path, "wb+") as f:
             model.save(f)
 
-        return model
+        return Vec2Word.create_with(model)

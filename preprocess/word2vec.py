@@ -5,6 +5,11 @@ from collections import defaultdict
 import numpy as np
 from tqdm import tqdm
 
+START_TOKEN = 'START'
+END_TOKEN = 'END'
+PAD_TOKEN = 'PAD'
+UNK_TOKEN = 'UNK'
+
 
 class Word2Vector:
     def __init__(self, pretrained_path, dimensions):
@@ -21,10 +26,10 @@ class Word2Vector:
         # This gives unique tokens that are not close to other vectors
         # Unkown token is the average vector of GLOVE
         # https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
-        self.tokens = {'START': np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([1.0, 0.0]))),
-                       'END': np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
-                       'PAD': np.ones(self.embedding_dim),
-                       'UNK': self.compute_average()}
+        self.tokens = {START_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([1.0, 0.0]))),
+                       END_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
+                       PAD_TOKEN: np.ones(self.embedding_dim),
+                       UNK_TOKEN: self.compute_average()}
         self.ZERO_COLS = np.array([0.0, 0.0], dtype=float)
         # We use np.pad for padding, with the pad value of 1 just like the PAD token
         self.pad_val = 1

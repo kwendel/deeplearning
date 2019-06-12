@@ -21,8 +21,8 @@ from tensorflow import set_random_seed
 from preprocess.dataset import load_flickr_set
 from preprocess.image import files_to_prediction
 from preprocess.text import read_captions, clean_captions
-from preprocess.word2vec import Word2Vector
 from preprocess.vec2word import Vec2Word
+from preprocess.word2vec import Word2Vector
 from utils.hparams import Hparams
 
 logging.basicConfig(level=logging.INFO)
@@ -140,7 +140,8 @@ def test_prepro():
     trn = pickle.load(open(train_path, 'rb'))
     tst = pickle.load(open(test_path, 'rb'))
 
-    vec2word = Vec2Word(os.path.join(prepro_path, "vec2word_model.npy"))
+    vec2word = Vec2Word.load_model(os.path.join(prepro_path, "vec2word_model.npy"), 52)
+
     def __print_random(values):
         id, x, ys = rn.choice(values)
 
