@@ -16,6 +16,9 @@ class Vec2Word:
     def create_with(cls, model):
         return cls(model)
 
+    def get_vec(self, word):
+        return self.model.wv[word]
+
     def vec2word(self, vec, topn):
         # Returns list with topn tuples of (word,similarity_score)
         vectors = self.model.wv.similar_by_vector(vec, topn=topn)
@@ -34,7 +37,10 @@ class Vec2Word:
         # Join all the non pad tokens
         sent = " ".join([w if w != PAD_TOKEN else "" for (w, s) in decoded])
 
-        return decoded, sent
+        # Also join decoded as (str, score) as this is easier for handling later on
+        sent_with = " ".join(["({},{})".format(w, s) for (w, s) in decoded])
+
+        return sent_with, sent
 
     @staticmethod
     def create_and_save(w2v, special_tokens, dimension, path):
