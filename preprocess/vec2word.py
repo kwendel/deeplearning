@@ -38,7 +38,7 @@ class Vec2Word:
         sent = " ".join([w if w != PAD_TOKEN else "" for (w, s) in decoded])
 
         # Also join decoded as (str, score) as this is easier for handling later on
-        sent_with = " ".join(["({},{.2f})".format(w, s) for (w, s) in decoded])
+        sent_with = " ".join(["({},{:.2f})".format(w, s) for (w, s) in decoded])
 
         return sent_with, sent
 

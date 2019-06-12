@@ -15,7 +15,7 @@ class Hparams:
     parser.add_argument('--dev', default='%s./dev_set.pkl' % default_dir)
     parser.add_argument('--test', default='%s./train_set.pkl' % default_dir)
     parser.add_argument('--vec2word', default='%s./vec2word_model.npy' % default_dir)
-    parser.add_argument('--split_size', default=1, type=int,
+    parser.add_argument('--split_size', default=1.0, type=float,
                         help="percentage [0,1] of the dataset that is randomly picked and used")
 
     # training scheme

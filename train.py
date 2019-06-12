@@ -27,9 +27,9 @@ logging.info("# Prepare train/eval batches")
 
 # Normal case -- train on the shuffled train set but evaluated on the unshuffeled development set
 train_batches, num_train_batches, num_train_samples = get_batch(hp.train, hp.batch_size,
-                                                                data_size=hp.data_split, shuffle=True)
-eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.dev, hp.batch_size,
-                                                             data_size=hp.data_split, shuffle=False)
+                                                                data_size=hp.split_size, shuffle=True)
+eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.dev, hp.eval_batch_size,
+                                                             data_size=hp.split_size, shuffle=False)
 
 # create a iterator of the correct shape and type
 iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
