@@ -41,3 +41,5 @@ class Vec2Word:
 
         with open(path, "wb+") as f:
             model.save(f)
+
+        return model
