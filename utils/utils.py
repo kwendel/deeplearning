@@ -151,7 +151,7 @@ def postprocess(hypotheses, vec2word):
     _hypotheses = []
     for h in hypotheses:
         _, sent = vec2word.matrix2sent(h)
-        # _hypotheses.append(sent.strip())
+        _hypotheses.append(sent)
     return _hypotheses
 
 
