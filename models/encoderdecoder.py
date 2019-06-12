@@ -1,7 +1,6 @@
 import logging
 
 import tensorflow as tf
-from tqdm import tqdm
 
 from preprocess.vec2word import Vec2Word
 from preprocess.word2vec import START_TOKEN, END_TOKEN, PAD_TOKEN, UNK_TOKEN
@@ -60,26 +59,42 @@ class EncoderDecoder:
 
         # Initialize batch (N, 1, 52) with only first row with the start token
         y_start = tf.ones((tf.shape(xs)[0], 1, self.hp.embed_size), tf.float32) * self.embedding[START_TOKEN]
-        y_in = y_start
+        y_hat = y_start
 
         # Use Encoder to generate memory of the picture
         memory = self.encoder.encode(xs)
 
         logging.info("Inference graph is being built. Please be patient.")
-        for _ in tqdm(range(self.hp.maxlen2)):
-            y_hat = self.decoder.decode(y_in, memory, training=False)
 
+        maxlen = tf.constant(self.hp.maxlen2)
+
+        def cond(y_in, c):
+            notLast = tf.math.less(c, maxlen)
+
+            # Check if the last row is equal to the pad token
             # TODO: maybe this is to strict? We can also do something like tf.math.less_equal(abs(rows - pad), epsi)...
-            # Check if the last row is completely/element-wise the same as the pad token
-            equals = tf.math.equal(y_hat[:, -1, :], self.embedding[PAD_TOKEN])
+            equals = tf.math.equal(y_in[:, -1, :], self.embedding[PAD_TOKEN])
+            notPad = tf.logical_not(tf.reduce_all(equals))
 
-            # Check for all batches at the same time if this is the case
-            if tf.reduce_all(equals) == True:
-                # Then we can stop evaluating
-                break
+            return tf.logical_and(notLast, notPad)
+
+        def body(y_in, c):
+            y_hat_ = self.decoder.decode(y_in, memory, training=False)
 
             # Grow the input to the decoder with one row
-            y_in = tf.concat((y_start, y_hat), 1)
+            y_in = tf.concat((y_start, y_hat_), 1)
+            c = tf.add(c, 1)
+
+            return y_in, c
+
+        c = tf.constant(0)
+        tf.while_loop(
+            cond,
+            body,
+            [y_hat, c],
+            # Let tf know that y_in is growing each iteration
+            shape_invariants=[tf.TensorShape([None, None, self.hp.embed_size]), c.get_shape()]
+        )
 
         # Monitor a random samples
         # true value is ys, last prediction is y_hat
