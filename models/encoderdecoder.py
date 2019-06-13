@@ -1,12 +1,12 @@
-import tensorflow as tf
-from cnn import CNN
-from transformer import Transfomer
-from utils.data_load import load_vocab
-from utils.modules import label_smoothing, noam_scheme
-from utils.utils import convert_idx_to_token_tensor
-
 import logging
+
+import tensorflow as tf
 from tqdm import tqdm
+
+from .encoder import Encoder
+from preprocess.word2vec import START_VEC, END_VEC, UNK_VEC, PAD_VEC
+from .transformer import Transformer
+from utils.modules import noam_scheme
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,24 +15,24 @@ class EncoderDecoder:
 
     def __init__(self, hp):
         self.hp = hp
-        self.encoder = CNN(hp)
-        self.decoder = Transfomer(hp)
+        self.encoder = Encoder(hp)
+        self.decoder = Transformer(hp)
 
-        # TODO:
-        self.token2idx, self.idx2token = load_vocab(hp.vocab)
-        # Load vocab
-        # Load token2idx etc.
-
+        self.embedding = {
+            'start': tf.convert_to_tensor(START_VEC, dtype=tf.float32),
+            'end': tf.convert_to_tensor(END_VEC, dtype=tf.float32),
+            'unk': tf.convert_to_tensor(UNK_VEC, dtype=tf.float32),
+            'pad': tf.convert_to_tensor(PAD_VEC, dtype=tf.float32)
+        }
 
     def train(self, xs, ys):
-        memory, info = self.encoder.encode(xs)
-        logits, yhat, y, length = self.decoder.decode(ys, memory, training=True)
+        memory = self.encoder.encode(xs)
+        yhat = self.decoder.decode(ys, memory, training=True)
 
+        yhat_n = tf.linalg.l2_normalize(yhat, axis=-1)
+        y_n = tf.linalg.l2_normalize(ys, axis=-1)
         # train scheme
-        y_ = label_smoothing(tf.one_hot(y, depth=self.hp.vocab_size))
-        ce = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=y_)
-        nonpadding = tf.to_float(tf.not_equal(y, self.token2idx["<pad>"]))  # 0: <pad>
-        loss = tf.reduce_sum(ce * nonpadding) / (tf.reduce_sum(nonpadding) + 1e-7)
+        loss = tf.losses.cosine_distance(y_n, yhat_n, axis=-1)
 
         global_step = tf.train.get_or_create_global_step()
         lr = noam_scheme(self.hp.lr, global_step, self.hp.warmup_steps)
@@ -47,36 +47,48 @@ class EncoderDecoder:
 
         return loss, train_op, global_step, summaries
 
-    def eval(self, xs, ys):
+    def eval(self, id, xs, ys):
         '''Predicts autoregressively
         At inference, input ys is ignored.
         Returns
-        y_hat: (N, T2)
+        y_hat: (N, T2, V)
         '''
-        decoder_inputs, y, y_seqlen, sents2 = ys
 
-        decoder_inputs = tf.ones((tf.shape(xs[0])[0], 1), tf.int32) * self.token2idx["<s>"]
-        ys = (decoder_inputs, y, y_seqlen, sents2)
+        # Initialize batch (N, 1, 52) with only first row with the start token
+        y_start = tf.ones((tf.shape(xs)[0], 1, self.hp.embed_size), tf.float32) * self.embedding['start']
+        y_in = y_start
 
-        memory, sents1 = self.encoder.encode(xs)
+        # Use Encoder to generate memory of the picture
+        memory = self.encoder.encode(xs)
 
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):
-            logits, y_hat, y, sents2 = self.decoder.decode(ys, memory, False)
-            if tf.reduce_sum(y_hat, 1) == self.token2idx["<pad>"]: break
+            y_hat = self.decoder.decode(y_in, memory, training=False)
 
-            _decoder_inputs = tf.concat((decoder_inputs, y_hat), 1)
-            ys = (_decoder_inputs, y, y_seqlen, sents2)
+            # TODO: maybe this is to strict? We can also do something like tf.math.less_equal(abs(rows - pad), epsi)...
+            # Check if the last row is completely/element-wise the same as the pad token
+            equals = tf.math.equal(y_hat[:, -1, :], self.embedding['pad'])
 
-        # monitor a random sample
-        n = tf.random_uniform((), 0, tf.shape(y_hat)[0] - 1, tf.int32)
-        sent1 = sents1[n]
-        pred = convert_idx_to_token_tensor(y_hat[n], self.idx2token)
-        sent2 = sents2[n]
+            # Check for all batches at the same time if this is the case
+            if tf.reduce_all(equals):
+                # Then we can stop evaluating
+                break
 
-        tf.summary.text("sent1", sent1)
-        tf.summary.text("pred", pred)
-        tf.summary.text("sent2", sent2)
-        summaries = tf.summary.merge_all()
+            # Grow the input to the decoder with one row
+            y_in = tf.concat((y_start, y_hat), 1)
+
+        # TODO: monitor a random sample
+        # true value is ys, last prediction is y_hat
+
+        # n = tf.random_uniform((), 0, tf.shape(y_hat)[0] - 1, tf.int32)
+        # sent1 = sents1[n]
+        # pred = convert_idx_to_token_tensor(y_hat[n], self.idx2token)
+        # sent2 = sents2[n]
+
+        # tf.summary.text("sent1", sent1)
+        # tf.summary.text("pred", pred)
+        # tf.summary.text("sent2", sent2)
+        # summaries = tf.summary.merge_all()
+        summaries = None
 
         return y_hat, summaries

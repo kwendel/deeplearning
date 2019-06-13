@@ -21,19 +21,16 @@ UNK_VEC = np.array([-0.12920076, -0.28866628, -0.01224866, -0.05676644, -0.20210
 # For the start/end token, we add two new columns to the embedding and make these tokens 1 in one column
 # This gives unique tokens that are not close to other vectors
 ZERO_COLS = np.array([0.0, 0.0], dtype=float)
-START_VEC = np.concatenate((np.zeros(50, dtype=float), np.array([1.0, 0.0])))
-END_VEC = np.concatenate((np.zeros(50, dtype=float), np.array([0.0, 1.0])))
+START_VEC = np.concatenate((np.ones(50, dtype=float), np.array([1.0, 0.0])))
+END_VEC = np.concatenate((np.ones(50, dtype=float), np.array([0.0, 1.0])))
 UNK_VEC = np.concatenate((UNK_VEC, ZERO_COLS))
 
 # This makes our embedding dimension 50 (glove) + 2 (extra)
 VEC_DIM = 52
 
-
-# Also we add the zero_cols to the word2vec embedding
-
-
-# We use np.pad for padding
-# PAD_VEC = np.zeros((1, 50 + 2))
+# We use np.pad for padding, but pad rows are equal to PAD_VEC
+pad_val = 1.0
+PAD_VEC = np.ones((50 + 2), dtype=float)
 
 
 def compute_average(w2v, vec_dim=VEC_DIM):
@@ -91,7 +88,7 @@ def embed_sentence(w2v, sentence, max_length, vec_dim=VEC_DIM):
             break
 
     # Pad until max length
-    embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=0)
+    embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant', constant_values=1.0)
 
     return embedded
 
@@ -113,7 +110,6 @@ def create_embeddings(df_captions, max_length):
     # Save as a new column and return the df
     df_captions['word2vec'] = embeddings
     return df_captions
-
 
 # if __name__ == '__main__':
 # captions = pickle.load(open(captions_path, 'rb'))
