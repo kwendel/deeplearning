@@ -19,6 +19,10 @@ class Word2Vector:
         # Embedding size is two larger, see special tokens
         self.embedding_dim = dimensions + 2
 
+        # Load the w2v model
+        self.w2v = self.load_w2v(pretrained_path, self.word_vec_dim)
+        self.ZERO_COLS = np.array([0.0, 0.0], dtype=float)
+
         # SPECIAL TOKENS:
         # For the start/end token, we add two new columns to the embedding and make one column one
         # This gives unique tokens that are not close to other vectors
@@ -28,16 +32,12 @@ class Word2Vector:
                        END_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
                        PAD_TOKEN: np.ones(self.embedding_dim),
                        UNK_TOKEN: self.compute_average()}
-        self.ZERO_COLS = np.array([0.0, 0.0], dtype=float)
         # We use np.pad for padding, with the pad value of 1 just like the PAD token
         self.pad_val = 1
 
         # Keep track of the known and unknown words for analysis
         self.knowns = defaultdict(int)
         self.unknowns = defaultdict(int)
-
-        # Finally, load the w2v model
-        self.w2v = self.load_w2v(pretrained_path, self.word_vec_dim)
 
     def load_w2v(self, path, dims):
         w2v = dict()
