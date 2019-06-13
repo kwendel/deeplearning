@@ -105,12 +105,14 @@ def read_captions(captions_path):
     return df_txt
 
 
-def clean_captions(df_txt):
-    for i, caption in enumerate(tqdm(df_txt.caption.values, desc='Cleaning captions')):
-        newcaption = text_clean(caption)
-        df_txt["caption"].iloc[i] = newcaption
+def clean_captions(series):
+    # Register tqdm for pandas
+    tqdm.pandas(desc="Clearning captions")
 
-    return df_txt
+    # Apply the text_clean function on every caption
+    cleaned = series.progress_apply(text_clean)
+
+    return cleaned
 
 
 def train_sp(in_path, out_path, vocab_size):
