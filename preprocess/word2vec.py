@@ -20,8 +20,8 @@ class Word2Vector:
         self.embedding_dim = dimensions + 2
 
         # Load the w2v model
-        self.w2v = self.load_w2v(pretrained_path, self.word_vec_dim)
         self.ZERO_COLS = np.array([0.0, 0.0], dtype=float)
+        self.w2v = self.load_w2v(pretrained_path, self.word_vec_dim)
 
         # SPECIAL TOKENS:
         # For the start/end token, we add two new columns to the embedding and make one column one
