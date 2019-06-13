@@ -59,7 +59,9 @@ class EncoderDecoder:
 
         # Initialize batch (N, 1, 52) with only first row with the start token
         y_start = tf.ones((tf.shape(xs)[0], 1, self.hp.embed_size), tf.float32) * self.embedding[START_TOKEN]
+        # tf.print(y_start[0])
         y_hat = y_start
+        # tf.print(y_hat[0])
 
         # Use Encoder to generate memory of the picture
         memory = self.encoder.encode(xs)
@@ -88,13 +90,18 @@ class EncoderDecoder:
             return y_in, c
 
         c = tf.constant(0)
-        tf.while_loop(
+        # c = 0
+        y_hat = tf.while_loop(
             cond,
             body,
             [y_hat, c],
             # Let tf know that y_in is growing each iteration
             shape_invariants=[tf.TensorShape([None, None, self.hp.embed_size]), c.get_shape()]
         )
+
+        # tf.print(y_hat[0])
+        # tf.print(tf.shape(y_hat))
+
 
         # Monitor a random samples
         # true value is ys, last prediction is y_hat
@@ -106,6 +113,9 @@ class EncoderDecoder:
         real_scores, real_sent = convert_embedding_tensor(ys[n], self.vec2word)
         pred_scores, pred_sent = convert_embedding_tensor(y_hat[n], self.vec2word)
 
+        # for s in (real_scores, real_sent, pred_scores, pred_sent):
+        #     tf.print(s)
+
         # Save summary
         tf.summary.text("id", id)
         tf.summary.text("pred_scores", pred_scores)
@@ -113,5 +123,6 @@ class EncoderDecoder:
         tf.summary.text("real_scores", real_scores)
         tf.summary.text("real_sent", real_sent)
         summaries = tf.summary.merge_all()
+        # summaries = None
 
         return y_hat, summaries

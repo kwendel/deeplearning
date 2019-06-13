@@ -27,7 +27,7 @@ class Transformer:
             dec = decoder_inputs  # (N, T2, V)
             # dec *= self.hp.d_model ** 0.5  # scale
 
-            dec += positional_encoding(dec, self.hp.maxlen2)
+            dec = tf.add(dec, positional_encoding(dec, self.hp.maxlen2))
             dec = tf.layers.dropout(dec, self.hp.dropout_rate, training=training)
 
             # Blocks
