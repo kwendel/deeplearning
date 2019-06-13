@@ -54,7 +54,7 @@ class Hparams:
                         help="label smoothing rate")
 
     parser.add_argument('--maxlen1', default=34, type=int, help="maximum length of a input sequences")
-    parser.add_argument('--maxlen2', default=100, type=int, help="maximum length of a output sequence")
+    parser.add_argument('--maxlen2', default=50, type=int, help="maximum length of a output sequence")
 
     # test
     # parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
