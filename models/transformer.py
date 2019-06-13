@@ -53,7 +53,7 @@ class Transformer:
                                               causality=False,
                                               scope="vanilla_attention")
                     ### Feed Forward
-                    dec = ff(dec, num_units=[self.hp.d_ff, self.hp.d_model])
+                    dec = ff(dec, num_units=[self.hp.d_ff_trans, self.hp.d_model_trans])
 
         
         y_hat = dec

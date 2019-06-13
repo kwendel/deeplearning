@@ -2,13 +2,14 @@
 # /usr/bin/python3
 
 import logging
+import os
 
 import tensorflow as tf
 
 from models.encoderdecoder import EncoderDecoder
 from utils.data_load import get_batch
 from utils.hparams import Hparams
-from utils.utils import load_hparams
+from utils.utils import load_hparams, get_hypotheses
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,19 +38,19 @@ with tf.Session() as sess:
     saver = tf.train.Saver()
 
     saver.restore(sess, ckpt)
-
     sess.run(test_init_op)
 
-    # TODO: same as in train.py
-    # logging.info("# get hypotheses")
-    # hypotheses = get_hypotheses(num_test_batches, num_test_samples, sess, y_hat, m.idx2token)
-    #
-    # logging.info("# write results")
-    # model_output = ckpt.split("/")[-1]
-    # if not os.path.exists(hp.testdir): os.makedirs(hp.testdir)
-    # translation = os.path.join(hp.testdir, model_output)
-    # with open(translation, 'w') as fout:
-    #     fout.write("\n".join(hypotheses))
-    #
+    logging.info("# get hypotheses")
+    hypotheses = get_hypotheses(num_test_batches, num_test_samples, sess, y_hat, m.vec2word)
+
+    logging.info("# write results")
+    model_output = ckpt.split("/")[-1]
+    if not os.path.exists(hp.testdir):
+        os.makedirs(hp.testdir)
+
+    captions = os.path.join(hp.testdir, model_output)
+    with open(captions, 'w') as fout:
+        fout.write("\n".join(hypotheses))
+
     # logging.info("# calc bleu score and append it to translation")
     # calc_bleu(hp.test2, translation)

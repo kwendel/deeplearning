@@ -8,14 +8,18 @@ https://www.github.com/kyubyong/transformer.
 Utility functions
 '''
 
-import tensorflow as tf
 # from tensorflow.python import pywrap_tensorflow
 # import numpy as np
 import json
-import os, re
 import logging
+import os
+import re
+
+import tensorflow as tf
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
+
 
 def calc_num_batches(total_num, batch_size):
     '''Calculates the number of batches.
@@ -26,18 +30,38 @@ def calc_num_batches(total_num, batch_size):
     number of batches, allowing for remainders.'''
     return total_num // batch_size + int(total_num % batch_size != 0)
 
-def convert_idx_to_token_tensor(inputs, idx2token):
-    '''Converts int32 tensor to string tensor.
-    inputs: 1d int32 tensor. indices.
-    idx2token: dictionary
 
-    Returns
-    1d string tensor.
-    '''
+def convert_embedding_tensor(inputs, vec2word):
+    """
+    Converts embedding float tensor to string tensor
+
+    :param inputs:
+    :param vec2word:
+    :return:
+    """
+
     def my_func(inputs):
-        return " ".join(idx2token[elem] for elem in inputs)
+        # Not sure about the type of inputs: either tf.tensor or numpy.ndarray
+        # Seems to be numpy.ndarray during training...
+        score, sent = vec2word.matrix2sent(inputs)
 
-    return tf.py_func(my_func, [inputs], tf.string)
+        return score, sent
+
+    return tf.py_func(my_func, [inputs], (tf.string, tf.string))
+
+
+# def convert_idx_to_token_tensor(inputs, idx2token):
+#     '''Converts int32 tensor to string tensor.
+#     inputs: 1d int32 tensor. indices.
+#     idx2token: dictionary
+#
+#     Returns
+#     1d string tensor.
+#     '''
+#     def my_func(inputs):
+#         return " ".join(idx2token[elem] for elem in inputs)
+#
+#     return tf.py_func(my_func, [inputs], tf.string)
 
 # # def pad(x, maxlen):
 # #     '''Pads x, list of sequences, and make it as a numpy array.
@@ -57,22 +81,6 @@ def convert_idx_to_token_tensor(inputs, idx2token):
 #
 #     return arry
 
-def postprocess(hypotheses, idx2token):
-    '''Processes translation outputs.
-    hypotheses: list of encoded predictions
-    idx2token: dictionary
-
-    Returns
-    processed hypotheses
-    '''
-    _hypotheses = []
-    for h in hypotheses:
-        sent = "".join(idx2token[idx] for idx in h)
-        sent = sent.split("</s>")[0].strip()
-        sent = sent.replace("▁", " ") # remove bpe symbols
-        _hypotheses.append(sent.strip())
-    return _hypotheses
-
 def save_hparams(hparams, path):
     '''Saves hparams to path
     hparams: argsparse object.
@@ -86,6 +94,7 @@ def save_hparams(hparams, path):
     with open(os.path.join(path, "hparams"), 'w') as fout:
         fout.write(hp)
 
+
 def load_hparams(parser, path):
     '''Loads hparams and overrides parser
     parser: argsparse parser
@@ -98,6 +107,7 @@ def load_hparams(parser, path):
     for f, v in flag2val.items():
         parser.f = v
 
+
 def save_variable_specs(fpath):
     '''Saves information about variables such as
     their name, shape, and total parameter number
@@ -106,6 +116,7 @@ def save_variable_specs(fpath):
     Writes
     a text file named fpath.
     '''
+
     def _get_size(shp):
         '''Gets size of tensor shape
         shp: TensorShape
@@ -115,7 +126,7 @@ def save_variable_specs(fpath):
         '''
         size = 1
         for d in range(len(shp)):
-            size *=shp[d]
+            size *= shp[d]
         return size
 
     params, num_params = [], 0
@@ -128,24 +139,41 @@ def save_variable_specs(fpath):
         fout.write("\n".join(params))
     logging.info("Variables info has been saved.")
 
-def get_hypotheses(num_batches, num_samples, sess, tensor, dict):
+
+def postprocess(hypotheses, vec2word):
+    '''Processes translation outputs.
+    hypotheses: list of encoded predictions
+    idx2token: dictionary
+
+    Returns
+    processed hypotheses
+    '''
+    _hypotheses = []
+    for h in hypotheses:
+        _, sent = vec2word.matrix2sent(h)
+        _hypotheses.append(sent)
+    return _hypotheses
+
+
+def get_hypotheses(num_batches, num_samples, sess, tensor, vec2word):
     '''Gets hypotheses.
     num_batches: scalar.
     num_samples: scalar.
     sess: tensorflow sess object
     tensor: target tensor to fetch
-    dict: idx2token dictionary
+    vec2word: vec2word class
 
     Returns
     hypotheses: list of sents
     '''
     hypotheses = []
-    for _ in range(num_batches):
+    for _ in tqdm(range(num_batches), desc="Generating hypothess"):
         h = sess.run(tensor)
         hypotheses.extend(h.tolist())
-    hypotheses = postprocess(hypotheses, dict)
+    hypotheses = postprocess(hypotheses, vec2word)
 
     return hypotheses[:num_samples]
+
 
 def calc_bleu(ref, translation):
     '''Calculates bleu score and appends the report to translation
@@ -165,16 +193,12 @@ def calc_bleu(ref, translation):
         os.system("mv {} {}".format(translation, new_translation))
         os.remove(translation)
 
-    except: pass
+    except:
+        pass
     os.remove("temp")
-
 
 # def get_inference_variables(ckpt, filter):
 #     reader = pywrap_tensorflow.NewCheckpointReader(ckpt)
 #     var_to_shape_map = reader.get_variable_to_shape_map()
 #     vars = [v for v in sorted(var_to_shape_map) if filter not in v]
 #     return vars
-
-
-
-
