@@ -19,8 +19,6 @@ class Word2Vector:
         # Embedding size is two larger, see special tokens
         self.embedding_dim = dimensions + 2
 
-        self.w2v = self.load_w2v(pretrained_path, self.word_vec_dim)
-
         # SPECIAL TOKENS:
         # For the start/end token, we add two new columns to the embedding and make one column one
         # This gives unique tokens that are not close to other vectors
@@ -37,6 +35,9 @@ class Word2Vector:
         # Keep track of the known and unknown words for analysis
         self.knowns = defaultdict(int)
         self.unknowns = defaultdict(int)
+
+        # Finally, load the w2v model
+        self.w2v = self.load_w2v(pretrained_path, self.word_vec_dim)
 
     def load_w2v(self, path, dims):
         w2v = dict()
