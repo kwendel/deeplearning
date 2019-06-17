@@ -118,3 +118,6 @@ iwslt2016/
 /dataset/*
 
 /models/pretrained/*
+
+# Important log files
+!log/cloud_run_1/*
