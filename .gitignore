@@ -108,8 +108,8 @@ venv.bak/
 deeplearning.iml
 
 # ignore data
-eval/
-log/
+eval/*
+log/*
 fig/
 test/
 iwslt2016/
@@ -119,5 +119,3 @@ iwslt2016/
 
 /models/pretrained/*
 
-# Important log files
-!log/cloud_run_1/*
