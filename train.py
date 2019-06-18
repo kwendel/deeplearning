@@ -21,15 +21,15 @@ hp = parser.parse_args()
 save_hparams(hp, hp.logdir)
 
 logging.info("# Prepare train/eval batches")
-with tf.device("/gpu:0"):
-    # Overfit test case -- train on a small subset of the development set to see if the loss converges
-    # train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, data_size=0.1, shuffle=True)
 
-    # Normal case -- train on the shuffled train set but evaluated on the unshuffeled development set
-    train_batches, num_train_batches, num_train_samples = get_batch(hp.train, hp.batch_size,
-                                                                 data_size=hp.split_size, shuffle=True)
-    eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.dev, hp.eval_batch_size,
-                                                                 data_size=hp.split_size, shuffle=False)
+# Overfit test case -- train on a small subset of the development set to see if the loss converges
+# train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, data_size=0.1, shuffle=True)
+
+# Normal case -- train on the shuffled train set but evaluated on the unshuffeled development set
+train_batches, num_train_batches, num_train_samples = get_batch(hp.train, hp.batch_size,
+                                                             data_size=hp.split_size, shuffle=True)
+eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.dev, hp.eval_batch_size,
+                                                             data_size=hp.split_size, shuffle=False)
 
 # create a iterator of the correct shape and type
 iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
