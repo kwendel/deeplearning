@@ -28,7 +28,7 @@ def load_data(fpath, data_size):
         keys = list(data.keys())
         # Set seed for overfitting run.
         # When the set captions should be gathered, use same seed with same data_size (seed=42, datasize=0.1)
-        random.seed(42)
+        # random.seed(42)
         pick = random.sample(keys, int(data_size * len(keys)))
         # pick = random.sample(keys, 3)
         data = {k: data[k] for k in pick}
