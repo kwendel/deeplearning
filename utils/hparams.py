@@ -26,7 +26,7 @@ class Hparams:
     parser.add_argument('--warmup_steps', default=4000, type=int)
     parser.add_argument('--logdir', default="log/1", help="log directory")
     parser.add_argument('--num_epochs', default=20, type=int)
-    parser.add_argument('--evaldir', default="eval/1", help="evaluation dir")
+    parser.add_argument('--evaldir', default="eval/2", help="evaluation dir")
 
     # Model
     # NOTE Kasper
