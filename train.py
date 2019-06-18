@@ -12,17 +12,16 @@ from utils.data_load import get_batch
 from utils.hparams import Hparams
 from utils.utils import save_hparams, save_variable_specs, get_hypotheses
 
+logging.basicConfig(level=logging.INFO)
+
+logging.info("# hparams")
+hparams = Hparams()
+parser = hparams.parser
+hp = parser.parse_args()
+save_hparams(hp, hp.logdir)
+
+logging.info("# Prepare train/eval batches")
 with tf.device("/gpu:0"):
-    logging.basicConfig(level=logging.INFO)
-
-    logging.info("# hparams")
-    hparams = Hparams()
-    parser = hparams.parser
-    hp = parser.parse_args()
-    save_hparams(hp, hp.logdir)
-
-    logging.info("# Prepare train/eval batches")
-
     # Overfit test case -- train on a small subset of the development set to see if the loss converges
     # train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, data_size=0.1, shuffle=True)
 
@@ -32,20 +31,21 @@ with tf.device("/gpu:0"):
     eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.dev, hp.eval_batch_size,
                                                                  data_size=hp.split_size, shuffle=False)
 
-    # create a iterator of the correct shape and type
-    iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
-    id, xs, ys = iter.get_next()
+# create a iterator of the correct shape and type
+iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
+id, xs, ys = iter.get_next()
 
-    train_init_op = iter.make_initializer(train_batches)
-    eval_init_op = iter.make_initializer(eval_batches)
+train_init_op = iter.make_initializer(train_batches)
+eval_init_op = iter.make_initializer(eval_batches)
 
-    logging.info("# Load model")
-    m = EncoderDecoder(hp)
-    loss, train_op, global_step, train_summaries = m.train(xs, ys)
-    y_hat, eval_summaries = m.eval(id, xs, ys)
+logging.info("# Load model")
+m = EncoderDecoder(hp)
+loss, train_op, global_step, train_summaries = m.train(xs, ys)
+y_hat, eval_summaries = m.eval(id, xs, ys)
 
-    logging.info("# Session")
-    saver = tf.train.Saver(max_to_keep=hp.num_epochs)
+logging.info("# Session")
+saver = tf.train.Saver(max_to_keep=hp.num_epochs)
+
 with tf.Session() as sess:
     ckpt = tf.train.latest_checkpoint(hp.logdir)
     if ckpt is None:
