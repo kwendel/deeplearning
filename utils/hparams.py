@@ -12,7 +12,7 @@ class Hparams:
     # Preprocessed files
     default_dir = 'dataset/Flickr8k/prepro'
     parser.add_argument('--train', default='%s/train_set.pkl' % default_dir)
-    parser.add_argument('--dev', default='%s/dev_set.pkl' % default_dir)
+    parser.add_argument('--dev', default='%s/dev_set.pkl' % default_dir)/1
     parser.add_argument('--test', default='%s/train_set.pkl' % default_dir)
     parser.add_argument('--vec2word', default='%s/vec2word_model.npy' % default_dir)
     parser.add_argument('--split_size', default=1.0, type=float,
@@ -63,4 +63,4 @@ class Hparams:
     #                     help="english test data")
     parser.add_argument('--ckpt', help="checkpoint file path")
     parser.add_argument('--test_batch_size', default=128, type=int)
-    parser.add_argument('--testdir', default="test/1", help="test result dir")
+    parser.add_argument('--testdir', default="test/2", help="test result dir")
