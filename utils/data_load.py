@@ -26,11 +26,12 @@ def load_data(fpath, data_size):
     if data_size < 1.0:
         # Randomly pick data_size percentage of the dataset
         keys = list(data.keys())
+        # Set seed for overfitting run.
+        # When the set captions should be gathered, use same seed with same data_size (seed=42, datasize=0.1)
         random.seed(42)
-        # pick = random.sample(keys, int(data_size * len(keys)))
-        pick = random.sample(keys, 3)
+        pick = random.sample(keys, int(data_size * len(keys)))
+        # pick = random.sample(keys, 3)
         data = {k: data[k] for k in pick}
-        print(pick)
 
     return data
 
