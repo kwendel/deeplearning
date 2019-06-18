@@ -73,16 +73,16 @@ with tf.Session() as sess:
             _, _eval_summaries = sess.run([eval_init_op, eval_summaries])
             summary_writer.add_summary(_eval_summaries, _gs)
 
-            logging.info("# get hypotheses")
-            hypotheses = get_hypotheses(num_eval_batches, num_eval_samples, sess, y_hat, m.vec2word)
+            # logging.info("# get hypotheses")
+            # hypotheses = get_hypotheses(num_eval_batches, num_eval_samples, sess, y_hat, m.vec2word)
 
             logging.info("# write results")
             model_output = "flickr8k_E%02dL%.2f" % (epoch, _loss)
 
-            if not os.path.exists(hp.evaldir): os.makedirs(hp.evaldir)
-            captions = os.path.join(hp.evaldir, model_output)
-            with open(captions, 'w', encoding='utf-8') as fout:
-                fout.write("\n".join(hypotheses))
+            # if not os.path.exists(hp.evaldir): os.makedirs(hp.evaldir)
+            # captions = os.path.join(hp.evaldir, model_output)
+            # with open(captions, 'w', encoding='utf-8') as fout:
+                # fout.write("\n".join(hypotheses))
 
             # TODO: Also analyse the textual results as a better loss not always indicates a better caption
             # logging.info("# calc bleu score and append it to translation")
