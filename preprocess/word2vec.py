@@ -37,7 +37,7 @@ class Word2Vector:
                        PAD_TOKEN: np.concatenate((np.random.uniform(-1.0, 1.0, self.word_vec_dim), np.array([-1.0, -1.0]))),
                        UNK_TOKEN: self.compute_average()}
         # We use np.pad for padding, with the pad value of 1 just like the PAD token
-        self.pad_val = 1    
+        self.pad_val = 1
 
         # Keep track of the known and unknown words for analysis
         self.knowns = defaultdict(int)
@@ -99,7 +99,7 @@ class Word2Vector:
 
         # Pad until max length
         embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant',
-                          constant_values=self.pad_val)
+                          constant_values=self.tokens['PAD'])
 
         return embedded
 
