@@ -57,6 +57,7 @@ def prepro(hp):
     # Check dataset splits files exist
     logging.info("# Check if dataset files are existing")
     dev_path = os.path.join(text_path, 'Flickr_8k.devImages.txt')
+    minidev_path = os.path.join(text_path, 'Flickr_8k.minidevImages.txt')
     train_path = os.path.join(text_path, 'Flickr_8k.trainImages.txt')
     test_path = os.path.join(text_path, 'Flickr_8k.testImages.txt')
     for f in (dev_path, train_path, test_path):
@@ -126,9 +127,10 @@ def prepro(hp):
         pickle.dump(dataset, file=open(p, 'wb'))
         logging.info("Succesfully saved in %s. " % p)
 
-    __write_set(dev_path, 'dev_set.pkl', test=False)
-    __write_set(train_path, 'train_set.pkl', test=False)
-    __write_set(test_path, 'test_set.pkl', test=False)
+    # __write_set(dev_path, 'dev_set.pkl', test=False)
+    # __write_set(train_path, 'train_set.pkl', test=False)
+    # __write_set(test_path, 'test_set.pkl', test=False)
+    __write_set(minidev_path, 'minidev_set.pkl', test=False)
 
 
 def test_prepro():
