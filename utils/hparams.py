@@ -13,6 +13,7 @@ class Hparams:
     default_dir = 'dataset/Flickr8k/prepro'
     parser.add_argument('--train', default='%s/train_set.pkl' % default_dir)
     parser.add_argument('--dev', default='%s/dev_set.pkl' % default_dir)
+    parser.add_argument('--minidev', default='%s/minidev_set.pkl' % default_dir)
     parser.add_argument('--test', default='%s/train_set.pkl' % default_dir)
     parser.add_argument('--vec2word', default='%s/vec2word_model.npy' % default_dir)
     parser.add_argument('--split_size', default=1.0, type=float,

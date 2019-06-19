@@ -60,7 +60,7 @@ def prepro(hp):
     minidev_path = os.path.join(text_path, 'Flickr_8k.minidevImages.txt')
     train_path = os.path.join(text_path, 'Flickr_8k.trainImages.txt')
     test_path = os.path.join(text_path, 'Flickr_8k.testImages.txt')
-    for f in (dev_path, train_path, test_path):
+    for f in (dev_path, minidev_path, train_path, test_path):
         if not os.path.exists(f):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f)
 
