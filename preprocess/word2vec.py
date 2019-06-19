@@ -36,8 +36,6 @@ class Word2Vector:
                        END_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
                        PAD_TOKEN: np.concatenate((np.random.uniform(-1.0, 1.0, self.word_vec_dim), np.array([-1.0, -1.0]))),
                        UNK_TOKEN: self.compute_average()}
-        # We use np.pad for padding, with the pad value of 1 just like the PAD token
-        self.pad_val = 1
 
         # Keep track of the known and unknown words for analysis
         self.knowns = defaultdict(int)
@@ -97,9 +95,12 @@ class Word2Vector:
                 print(v)
                 raise ValueError("Embedding is of the wrong size!")
 
+        for i in (max_length - len(embedded)):
+            embedded[i + 1, :] = self.tokens['PAD']
+
         # Pad until max length
-        embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant',
-                          constant_values=self.tokens['PAD'])
+        # embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant',
+        #                   constant_values=self.tokens['PAD'])
 
         return embedded
 
