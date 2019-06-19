@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 
 import numpy as np
-from tqdm import tqdm
+#from tqdm import tqdm
 
 START_TOKEN = 'START'
 END_TOKEN = 'END'
@@ -28,9 +28,13 @@ class Word2Vector:
         # This gives unique tokens that are not close to other vectors
         # Unkown token is the average vector of GLOVE
         # https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
+        # PAD token is set to a randomly generated vector with last two dimension set to -1.
+        # This should make sure that all tokens in the space are dissimilar to the PAD token.
+        # Set seed so that pad token is always the same.
+        np.random.seed(42)
         self.tokens = {START_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([1.0, 0.0]))),
                        END_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
-                       PAD_TOKEN: np.ones(self.embedding_dim),
+                       PAD_TOKEN: np.concatenate((np.random.uniform(-1.0, 1.0, self.word_vec_dim), np.array([-1.0, -1.0]))),
                        UNK_TOKEN: self.compute_average()}
         # We use np.pad for padding, with the pad value of 1 just like the PAD token
         self.pad_val = 1
@@ -71,7 +75,7 @@ class Word2Vector:
             # Count as known if this not gave an exception
             self.knowns[word] += 1
         except KeyError:
-            v = self.tokens['UNK']
+            v = self.tokens[self.UNK_PAD]
             self.unknowns[word] += 1
 
         return v
