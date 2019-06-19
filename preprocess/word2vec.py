@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 
 import numpy as np
-#from tqdm import tqdm
+from tqdm import tqdm
 
 START_TOKEN = 'START'
 END_TOKEN = 'END'
@@ -37,7 +37,7 @@ class Word2Vector:
                        PAD_TOKEN: np.concatenate((np.random.uniform(-1.0, 1.0, self.word_vec_dim), np.array([-1.0, -1.0]))),
                        UNK_TOKEN: self.compute_average()}
         # We use np.pad for padding, with the pad value of 1 just like the PAD token
-        self.pad_val = 1
+        self.pad_val = 1    
 
         # Keep track of the known and unknown words for analysis
         self.knowns = defaultdict(int)
@@ -75,7 +75,7 @@ class Word2Vector:
             # Count as known if this not gave an exception
             self.knowns[word] += 1
         except KeyError:
-            v = self.tokens[self.UNK_PAD]
+            v = self.tokens['UNK']
             self.unknowns[word] += 1
 
         return v
