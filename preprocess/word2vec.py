@@ -95,8 +95,8 @@ class Word2Vector:
                 print(v)
                 raise ValueError("Embedding is of the wrong size!")
 
-        for i in (max_length - len(embedded)):
-            embedded[i + 1, :] = self.tokens['PAD']
+        for i in range(len(embedded), max_length):
+            embedded = np.append(embedded, self.tokens['PAD'])
 
         # Pad until max length
         # embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant',
