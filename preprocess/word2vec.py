@@ -82,6 +82,7 @@ class Word2Vector:
         words = sentence.split()
         N = len(words) + 2  # Add two for the start and end token
         embedded = np.zeros((N, self.embedding_dim))
+
         # Add start and end token
         embedded[0, :] = self.tokens['START']
         embedded[-1, :] = self.tokens['END']
@@ -95,7 +96,8 @@ class Word2Vector:
                 print(v)
                 raise ValueError("Embedding is of the wrong size!")
 
-        for i in range(len(embedded), max_length):
+        embedding_length = len(embedded)
+        for i in range(embedding_length, max_length):
             embedded = np.append(embedded, self.tokens['PAD'])
 
         # Pad until max length
