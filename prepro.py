@@ -35,7 +35,7 @@ def setseed(sd=42):
 
 
 def prepro(hp):
-    """Load raw data -> Preprocessing -> Segmenting with sentencepice
+    """Load raw data -> Preprocessing -> Embed with pretrained GloVe
     hp: hyperparams. argparse.
     """
 
@@ -57,9 +57,10 @@ def prepro(hp):
     # Check dataset splits files exist
     logging.info("# Check if dataset files are existing")
     dev_path = os.path.join(text_path, 'Flickr_8k.devImages.txt')
+    minidev_path = os.path.join(text_path, 'Flickr_8k.minidevImages.txt')
     train_path = os.path.join(text_path, 'Flickr_8k.trainImages.txt')
     test_path = os.path.join(text_path, 'Flickr_8k.testImages.txt')
-    for f in (dev_path, train_path, test_path):
+    for f in (dev_path, minidev_path, train_path, test_path):
         if not os.path.exists(f):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), f)
 
@@ -95,7 +96,6 @@ def prepro(hp):
 
     # Check if we have the embeddings of Word2Vec
     if 'word2vec' not in captions.columns:
-        # TODO: make these below hyperparameters for easier embedding switching
         w2v_path = os.path.join(pretrained_path, "glove.6B", "glove.6B.50d.txt")
         vec_dim = 50
         embedding_dim = vec_dim + 2
@@ -129,6 +129,7 @@ def prepro(hp):
     __write_set(dev_path, 'dev_set.pkl', test=False)
     __write_set(train_path, 'train_set.pkl', test=False)
     __write_set(test_path, 'test_set.pkl', test=False)
+    __write_set(minidev_path, 'minidev_set.pkl', test=False)
 
 
 def test_prepro():

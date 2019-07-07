@@ -5,16 +5,15 @@ class Hparams:
     parser = argparse.ArgumentParser()
 
     # prepro
-    # # parser.add_argument('--vocab_size', default=32000, type=int)
-    # parser.add_argument('--vocab_size', default=2048, type=int)
     parser.add_argument('--embed_size', default=52, type=int)
 
     # Preprocessed files
     default_dir = 'dataset/Flickr8k/prepro'
-    parser.add_argument('--train', default='%s./train_set.pkl' % default_dir)
-    parser.add_argument('--dev', default='%s./dev_set.pkl' % default_dir)
-    parser.add_argument('--test', default='%s./train_set.pkl' % default_dir)
-    parser.add_argument('--vec2word', default='%s./vec2word_model.npy' % default_dir)
+    parser.add_argument('--train', default='%s/train_set.pkl' % default_dir)
+    parser.add_argument('--dev', default='%s/dev_set.pkl' % default_dir)
+    parser.add_argument('--minidev', default='%s/minidev_set.pkl' % default_dir)
+    parser.add_argument('--test', default='%s/train_set.pkl' % default_dir)
+    parser.add_argument('--vec2word', default='%s/vec2word_model.npy' % default_dir)
     parser.add_argument('--split_size', default=1.0, type=float,
                         help="percentage [0,1] of the dataset that is randomly picked and used")
 
@@ -29,9 +28,6 @@ class Hparams:
     parser.add_argument('--evaldir', default="eval/1", help="evaluation dir")
 
     # Model
-    # NOTE Kasper
-    # feedforwards: these parameters are defined separately but d_model must be the same for both I think(??)
-
     # Encoder feedforward
     parser.add_argument('--d_model_enc', default=52, type=int,
                         help="hidden dimension of encoder/decoder")
@@ -57,10 +53,6 @@ class Hparams:
     parser.add_argument('--maxlen2', default=50, type=int, help="maximum length of a output sequence")
 
     # test
-    # parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
-    #                     help="german test segmented data")
-    # parser.add_argument('--test2', default='iwslt2016/prepro/test.en',
-    #                     help="english test data")
     parser.add_argument('--ckpt', help="checkpoint file path")
     parser.add_argument('--test_batch_size', default=128, type=int)
     parser.add_argument('--testdir', default="test/1", help="test result dir")

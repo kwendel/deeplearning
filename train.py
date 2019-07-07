@@ -10,7 +10,7 @@ from tqdm import tqdm
 from models.encoderdecoder import EncoderDecoder
 from utils.data_load import get_batch
 from utils.hparams import Hparams
-from utils.utils import save_hparams, save_variable_specs, get_hypotheses
+from utils.utils import save_hparams, save_variable_specs
 
 logging.basicConfig(level=logging.INFO)
 
@@ -23,12 +23,14 @@ save_hparams(hp, hp.logdir)
 logging.info("# Prepare train/eval batches")
 
 # Overfit test case -- train on a small subset of the development set to see if the loss converges
-# train_batches, num_train_batches, num_train_samples = get_batch(hp.dev, hp.batch_size, data_size=0.1, shuffle=True)
+train_batches, num_train_batches, num_train_samples = get_batch(hp.minidev, hp.batch_size, shuffle=True)
 
 # Normal case -- train on the shuffled train set but evaluated on the unshuffeled development set
-train_batches, num_train_batches, num_train_samples = get_batch(hp.train, hp.batch_size,
-                                                                data_size=hp.split_size, shuffle=True)
-eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.dev, hp.eval_batch_size,
+# train_batches, num_train_batches, num_train_samples = get_batch(hp.train, hp.batch_size,
+#                                                              data_size=hp.split_size, shuffle=True)
+
+# Evaluation set
+eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.minidev, hp.eval_batch_size,
                                                              data_size=hp.split_size, shuffle=False)
 
 # create a iterator of the correct shape and type
@@ -45,6 +47,7 @@ y_hat, eval_summaries = m.eval(id, xs, ys)
 
 logging.info("# Session")
 saver = tf.train.Saver(max_to_keep=hp.num_epochs)
+
 with tf.Session() as sess:
     ckpt = tf.train.latest_checkpoint(hp.logdir)
     if ckpt is None:
@@ -68,25 +71,12 @@ with tf.Session() as sess:
             logging.info("epoch {} is done".format(epoch))
             _loss = sess.run(loss)  # train loss
 
-            # TODO: Why is there no eval loss??
             logging.info("# test evaluation")
             _, _eval_summaries = sess.run([eval_init_op, eval_summaries])
             summary_writer.add_summary(_eval_summaries, _gs)
 
-            logging.info("# get hypotheses")
-            hypotheses = get_hypotheses(num_eval_batches, num_eval_samples, sess, y_hat, m.vec2word)
-
             logging.info("# write results")
             model_output = "flickr8k_E%02dL%.2f" % (epoch, _loss)
-
-            if not os.path.exists(hp.evaldir): os.makedirs(hp.evaldir)
-            captions = os.path.join(hp.evaldir, model_output)
-            with open(captions, 'w', encoding='utf-8') as fout:
-                fout.write("\n".join(hypotheses))
-
-            # TODO: Also analyse the textual results as a better loss not always indicates a better caption
-            # logging.info("# calc bleu score and append it to translation")
-            # calc_bleu(hp.eval3, translation)
 
             logging.info("# save models")
             ckpt_name = os.path.join(hp.logdir, model_output)

@@ -9,7 +9,7 @@ import tensorflow as tf
 from models.encoderdecoder import EncoderDecoder
 from utils.data_load import get_batch
 from utils.hparams import Hparams
-from utils.utils import load_hparams, get_hypotheses
+from utils.utils import get_hypotheses, load_hparams
 
 logging.basicConfig(level=logging.INFO)
 
@@ -51,6 +51,3 @@ with tf.Session() as sess:
     captions = os.path.join(hp.testdir, model_output)
     with open(captions, 'w') as fout:
         fout.write("\n".join(hypotheses))
-
-    # logging.info("# calc bleu score and append it to translation")
-    # calc_bleu(hp.test2, translation)
