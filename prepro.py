@@ -137,9 +137,11 @@ def test_prepro():
     dev_path = os.path.join(prepro_path, 'dev_set.pkl')
     train_path = os.path.join(prepro_path, 'train_set.pkl')
     test_path = os.path.join(prepro_path, 'test_set.pkl')
+    minidev_path = os.path.join(prepro_path, 'minidev_set.pkl')
     dev = pickle.load(open(dev_path, 'rb'))
     trn = pickle.load(open(train_path, 'rb'))
     tst = pickle.load(open(test_path, 'rb'))
+    minidev = pickle.load(open(minidev_path, 'rb'))
 
     vec2word = Vec2Word.load_model(os.path.join(prepro_path, "vec2word_model.npy"), 52)
 
@@ -180,6 +182,8 @@ def test_prepro():
     __print_random(list(trn.values()))
     print("Test set")
     __print_random(list(tst.values()))
+    print("Minidev set")
+    __print_random(list(minidev.values()))
 
 
 if __name__ == '__main__':
