@@ -5,8 +5,6 @@ class Hparams:
     parser = argparse.ArgumentParser()
 
     # prepro
-    # # parser.add_argument('--vocab_size', default=32000, type=int)
-    # parser.add_argument('--vocab_size', default=2048, type=int)
     parser.add_argument('--embed_size', default=52, type=int)
 
     # Preprocessed files
@@ -26,13 +24,10 @@ class Hparams:
     parser.add_argument('--lr', default=0.0003, type=float, help="learning rate")
     parser.add_argument('--warmup_steps', default=4000, type=int)
     parser.add_argument('--logdir', default="log/1", help="log directory")
-    parser.add_argument('--num_epochs', default=1000, type=int)
+    parser.add_argument('--num_epochs', default=20, type=int)
     parser.add_argument('--evaldir', default="eval/1", help="evaluation dir")
 
     # Model
-    # NOTE Kasper
-    # feedforwards: these parameters are defined separately but d_model must be the same for both I think(??)
-
     # Encoder feedforward
     parser.add_argument('--d_model_enc', default=52, type=int,
                         help="hidden dimension of encoder/decoder")
@@ -58,10 +53,6 @@ class Hparams:
     parser.add_argument('--maxlen2', default=50, type=int, help="maximum length of a output sequence")
 
     # test
-    # parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
-    #                     help="german test segmented data")
-    # parser.add_argument('--test2', default='iwslt2016/prepro/test.en',
-    #                     help="english test data")
     parser.add_argument('--ckpt', help="checkpoint file path")
     parser.add_argument('--test_batch_size', default=128, type=int)
     parser.add_argument('--testdir', default="test/1", help="test result dir")

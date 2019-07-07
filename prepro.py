@@ -35,7 +35,7 @@ def setseed(sd=42):
 
 
 def prepro(hp):
-    """Load raw data -> Preprocessing -> Segmenting with sentencepice
+    """Load raw data -> Preprocessing -> Embed with pretrained GloVe
     hp: hyperparams. argparse.
     """
 
@@ -96,7 +96,6 @@ def prepro(hp):
 
     # Check if we have the embeddings of Word2Vec
     if 'word2vec' not in captions.columns:
-        # TODO: make these below hyperparameters for easier embedding switching
         w2v_path = os.path.join(pretrained_path, "glove.6B", "glove.6B.50d.txt")
         vec_dim = 50
         embedding_dim = vec_dim + 2
@@ -127,9 +126,9 @@ def prepro(hp):
         pickle.dump(dataset, file=open(p, 'wb'))
         logging.info("Succesfully saved in %s. " % p)
 
-    # __write_set(dev_path, 'dev_set.pkl', test=False)
-    # __write_set(train_path, 'train_set.pkl', test=False)
-    # __write_set(test_path, 'test_set.pkl', test=False)
+    __write_set(dev_path, 'dev_set.pkl', test=False)
+    __write_set(train_path, 'train_set.pkl', test=False)
+    __write_set(test_path, 'test_set.pkl', test=False)
     __write_set(minidev_path, 'minidev_set.pkl', test=False)
 
 

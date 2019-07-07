@@ -27,15 +27,17 @@ class Word2Vector:
         # For the start/end token, we add two new columns to the embedding and make one column one
         # This gives unique tokens that are not close to other vectors
         # Unkown token is the average vector of GLOVE
-        # https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
+        # https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b
+        # -50d-txt
         # PAD token is set to a randomly generated vector with last two dimension set to -1.
         # This should make sure that all tokens in the space are dissimilar to the PAD token.
         # Set seed so that pad token is always the same.
         np.random.seed(42)
         self.tokens = {START_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([1.0, 0.0]))),
-                       END_TOKEN: np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
-                       PAD_TOKEN: np.concatenate((np.random.uniform(-1.0, 1.0, self.word_vec_dim), np.array([-1.0, -1.0]))),
-                       UNK_TOKEN: self.compute_average()}
+                       END_TOKEN:   np.concatenate((np.ones(self.word_vec_dim, dtype=float), np.array([0.0, 1.0]))),
+                       PAD_TOKEN:   np.concatenate((np.random.uniform(-1.0, 1.0, self.word_vec_dim),
+                                                    np.array([-1.0, -1.0]))),
+                       UNK_TOKEN:   self.compute_average()}
 
         # Keep track of the known and unknown words for analysis
         self.knowns = defaultdict(int)
@@ -96,13 +98,10 @@ class Word2Vector:
                 print(v)
                 raise ValueError("Embedding is of the wrong size!")
 
+        # Pad until max length
         embedding_length = len(embedded)
         for i in range(embedding_length, max_length):
             embedded = np.append(embedded, self.tokens['PAD'])
-
-        # Pad until max length
-        # embedded = np.pad(embedded, [(0, max_length - len(embedded)), (0, 0)], mode='constant',
-        #                   constant_values=self.tokens['PAD'])
 
         return embedded
 
