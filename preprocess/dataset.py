@@ -11,7 +11,6 @@ def load_flickr_set(images, text, file, test):
         id: (id, img_data, word vector)
     }
 
-    TODO: THIS IS NOT USED RIGHT NOW:
     Test Structure:
     {
         id: (id, img_data, (c1, c2, c3, c4, c5))

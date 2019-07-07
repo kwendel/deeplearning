@@ -69,7 +69,6 @@ class EncoderDecoder:
         for _ in tqdm(range(self.hp.maxlen2)):
             y_hat = self.decoder.decode(y_in, memory, training=False)
 
-            # TODO: maybe this is to strict? We can also do something like tf.math.less_equal(abs(rows - pad), epsi)...
             # Check if the last row is completely/element-wise the same as the pad token
             equals = tf.math.equal(y_hat[:, -1, :], self.embedding[PAD_TOKEN])
 
