@@ -30,7 +30,7 @@ Preprocessing uses a pretrained VGG16 and GloVe Word2Vec. Please download the pr
         |--- vgg16_weights_tf_dim_ordering_tf_kernels.h5
         └--- glove.6B
             └--- glove.6B.50d.txt
-``` 
+```
 
 ## Dataset
 The Flicker8k dataset is used in this project and can be downloaded online (or contact the authors for a torrent).
@@ -46,9 +46,10 @@ Dataset must be provided in the following way (which is the default structure af
         └--- Flickr8k_text            
              |  Flickr8k.lemma.token.txt
              |  Flickr_8k.devImages.txt
+             |  Flickr_8k.minidevImages.txt (already included in this repository)
              |  Flickr_8k.testImages.txt
              |  Flickr_8k.trainImages.txt
-``` 
+```
 :running: How to run the Network
 ======
 
