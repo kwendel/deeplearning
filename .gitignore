@@ -115,7 +115,7 @@ test/
 iwslt2016/
 
 # Ignore datsets
-/dataset/Flickr8k/*
+/dataset/Flickr8k/Flickr8k_Dataset/*
 
 /models/pretrained/*
 
