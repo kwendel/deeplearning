@@ -1,5 +1,6 @@
 # Deeplearning: Attention-based image to caption using a Transformer based network
 Image caption generation using an encoder-decoder neural network architecture. VGGNet intermediate predictions are used for encoding the image data to a hidden state. A Transformer network is used to decode to a caption.
+For more information, and the corresponding results, see the [paper](deliverables/Group40_Report.pdf) and [poster](deliverables/Group40_Poster.pdf).
 
 ### Authors
 - W. Diepeveen
